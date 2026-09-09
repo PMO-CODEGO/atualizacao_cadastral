@@ -1,0 +1,32 @@
+# Ambiente
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Uploads e documentos enviados (nunca versionar)
+backend/uploads/
+backend/storage/
+*.pdf
+
+# Banco de dados local
+*.sqlite3
+database/data/
+
+# Docker
+docker/volumes/
+
+# Logs
+*.log
+
+# Sistema operacional / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

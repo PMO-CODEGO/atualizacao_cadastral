@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atualização Cadastral — CODEGO</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="page">
+
+    <header class="letterhead">
+      <img class="letterhead__mark" src="assets/brasao_codego.png" alt="Brasão da Companhia de Desenvolvimento Econômico de Goiás">
+      <div class="letterhead__text">
+        <p class="letterhead__org">Companhia de Desenvolvimento Econômico de Goiás</p>
+        <h1 class="letterhead__title">Atualização Cadastral</h1>
+      </div>
+    </header>
+
+    <main class="card">
+      <div class="card__intro">
+        <h2 class="card__title">Solicitação de Atualização Cadastral</h2>
+        <p class="card__desc">
+          Leia os dois termos abaixo, anexe os documentos exigidos (CNPJ e Contrato
+          Social, em PDF) e preencha os dados da empresa e do representante legal.
+        </p>
+      </div>
+
+      <form id="form-atualizacao" novalidate>
+
+        <h3 class="section-title">Termos de compromisso</h3>
+
+        <div class="termo-block">
+          <p class="termo-block__titulo">Compromisso da empresa</p>
+          <p class="termo-block__texto">Esta empresa se compromete a repassar todas as informações com veracidade e fidelidade aos dados, podendo ser responsabilizada extrajudicial ou judicialmente em caso de omissão de informações ou repasse de informações incorretas. Em caso de dúvidas sobre o preenchimento, as empresas deverão entrar em contato através dos canais de comunicação que seguem abaixo:
+
+Telefone: (62) 3604-3100
+E-mail: atualizacao.cadastral@codego.com.br</p>
+          <label class="termo-block__aceite">
+            <input type="checkbox" id="termo_empresa_aceito" name="termo_empresa_aceito" required>
+            <span>Li e concordo com os termos acima</span>
+          </label>
+          <p class="field__error" data-error-for="termo_empresa_aceito"></p>
+        </div>
+
+        <div class="termo-block">
+          <p class="termo-block__titulo">Termo de Compromisso da CODEGO</p>
+          <p class="termo-block__texto">Termo de Compromisso da Companhia de Desenvolvimento Econômico de Goiás (CODEGO). Sobre os dados fornecidos pela empresa, a CODEGO se compromete a utilizá-los para fins de levantamentos sobre os distritos que são gerenciados pela mesma e mantê-los seguros e armazenados apenas em seu banco de dados local, sem disponibilização dos mesmos para terceiros.
+
+Responsabilidade pela Segurança dos Dados: A CODEGO se responsabiliza por manter medidas de segurança, técnicas e administrativas suficientes a fim de proteger os dados pessoais e dados referentes às empresas, comunicando ao representante responsável pelo fornecimento dos dados, caso ocorra algum incidente de segurança que possa acarretar risco ou dano relevante, conforme artigo 48 da Lei n° 13.709/2018.</p>
+          <label class="termo-block__aceite">
+            <input type="checkbox" id="termo_codego_aceito" name="termo_codego_aceito" required>
+            <span>Li e concordo com os termos acima</span>
+          </label>
+          <p class="field__error" data-error-for="termo_codego_aceito"></p>
+        </div>
+
+        <h3 class="section-title">Documentos</h3>
+
+        <div class="field">
+          <label for="arquivo_cnpj">CNPJ (PDF)</label>
+          <div class="file-drop">
+            <input type="file" id="arquivo_cnpj" name="arquivo_cnpj" accept="application/pdf" required>
+            <p class="file-drop__hint">Somente PDF, até 10MB.</p>
+            <p class="file-drop__selected" id="arquivo_cnpj-selecionado" hidden></p>
+          </div>
+          <p class="field__error" data-error-for="arquivo_cnpj"></p>
+        </div>
+
+        <div class="field">
+          <label for="arquivo_contrato_social">Contrato Social (PDF)</label>
+          <div class="file-drop">
+            <input type="file" id="arquivo_contrato_social" name="arquivo_contrato_social" accept="application/pdf" required>
+            <p class="file-drop__hint">Somente PDF, até 10MB.</p>
+            <p class="file-drop__selected" id="arquivo_contrato_social-selecionado" hidden></p>
+          </div>
+          <p class="field__error" data-error-for="arquivo_contrato_social"></p>
+        </div>
+
+        <h3 class="section-title">Dados da empresa</h3>
+
+        <div class="field">
+          <label for="nome_empresarial">Nome Empresarial / Razão Social</label>
+          <input type="text" id="nome_empresarial" name="nome_empresarial" required>
+          <p class="field__error" data-error-for="nome_empresarial"></p>
+        </div>
+
+        <div class="field">
+          <label for="cnpj">CNPJ</label>
+          <input type="text" id="cnpj" name="cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" required>
+          <p class="field__error" data-error-for="cnpj"></p>
+        </div>
+
+        <div class="field">
+          <label for="endereco">Endereço completo da empresa</label>
+          <input type="text" id="endereco" name="endereco" placeholder="Rua, número, bairro, cidade-UF" required>
+          <p class="field__error" data-error-for="endereco"></p>
+        </div>
+
+        <div class="field">
+          <label for="distrito">Distrito/Loteamento vinculado</label>
+          <input type="text" id="distrito" name="distrito" required>
+          <p class="field__error" data-error-for="distrito"></p>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="telefone">Telefone</label>
+            <input type="tel" id="telefone" name="telefone" inputmode="tel" placeholder="(00) 00000-0000" required>
+            <p class="field__error" data-error-for="telefone"></p>
+          </div>
+
+          <div class="field">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" autocomplete="email" required>
+            <p class="field__error" data-error-for="email"></p>
+          </div>
+        </div>
+
+        <h3 class="section-title">Representante legal</h3>
+
+        <div class="field">
+          <label for="representante_nome">Nome do representante legal</label>
+          <input type="text" id="representante_nome" name="representante_nome" autocomplete="name" required>
+          <p class="field__error" data-error-for="representante_nome"></p>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="representante_cpf">CPF do representante legal</label>
+            <input type="text" id="representante_cpf" name="representante_cpf" inputmode="numeric" placeholder="000.000.000-00" required>
+            <p class="field__error" data-error-for="representante_cpf"></p>
+          </div>
+
+          <div class="field">
+            <label for="representante_cargo">Cargo/função do representante</label>
+            <input type="text" id="representante_cargo" name="representante_cargo" required>
+            <p class="field__error" data-error-for="representante_cargo"></p>
+          </div>
+        </div>
+
+        <div class="card__footer">
+          <p class="card__footer-note">
+            Os dados e documentos são usados apenas para fins de atualização cadastral junto à CODEGO.
+          </p>
+          <button type="submit" class="btn-primary" id="btn-submit">Enviar atualização cadastral</button>
+        </div>
+
+      </form>
+
+      <div class="feedback" id="feedback" role="status" aria-live="polite" hidden></div>
+
+    </main>
+
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
