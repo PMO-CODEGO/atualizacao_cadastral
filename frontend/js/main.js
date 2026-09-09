@@ -5,6 +5,14 @@ const form = document.getElementById('form-atualizacao');
 const submitButton = document.getElementById('btn-submit');
 const feedbackEl = document.getElementById('feedback');
 
+const ARQUIVOS = [
+  'arquivo_cnpj',
+  'arquivo_contrato_social',
+  'arquivo_certidao_matricula',
+  'arquivo_contrato_ou_procuracao',
+  'arquivo_documento_identidade',
+];
+
 function onlyDigits(value) {
   return value.replace(/\D/g, '');
 }
@@ -47,6 +55,9 @@ document.getElementById('representante_cpf').addEventListener('input', (e) => {
 document.getElementById('telefone').addEventListener('input', (e) => {
   e.target.value = maskTelefone(onlyDigits(e.target.value));
 });
+document.getElementById('representante_telefone').addEventListener('input', (e) => {
+  e.target.value = maskTelefone(onlyDigits(e.target.value));
+});
 
 function setupFilePreview(inputId) {
   const input = document.getElementById(inputId);
@@ -62,8 +73,7 @@ function setupFilePreview(inputId) {
     clearError(inputId);
   });
 }
-setupFilePreview('arquivo_cnpj');
-setupFilePreview('arquivo_contrato_social');
+ARQUIVOS.forEach(setupFilePreview);
 
 function setError(fieldName, message) {
   const errorEl = document.querySelector(`[data-error-for="${fieldName}"]`);
@@ -85,31 +95,31 @@ function validateEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-function validarArquivo(input, fieldName) {
+function validarArquivo(inputId) {
+  const input = document.getElementById(inputId);
   const file = input.files[0];
   if (!file) {
-    setError(fieldName, 'Selecione o arquivo em PDF.');
+    setError(inputId, 'Selecione o arquivo em PDF.');
     return false;
   }
   const nomeArquivo = file.name.toLowerCase();
   if (!nomeArquivo.endsWith('.pdf') || file.type !== 'application/pdf') {
-    setError(fieldName, 'O arquivo deve estar no formato PDF.');
+    setError(inputId, 'O arquivo deve estar no formato PDF.');
     return false;
   }
   if (file.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
-    setError(fieldName, `O arquivo excede o limite de ${MAX_UPLOAD_SIZE_MB}MB.`);
+    setError(inputId, `O arquivo excede o limite de ${MAX_UPLOAD_SIZE_MB}MB.`);
     return false;
   }
-  clearError(fieldName);
+  clearError(inputId);
   return true;
 }
 
 const CAMPOS_TEXTO_OBRIGATORIOS = [
-  ['nome_empresarial', 'Informe o nome empresarial.'],
-  ['endereco', 'Informe o endereço da empresa.'],
-  ['distrito', 'Informe o distrito/loteamento vinculado.'],
-  ['representante_nome', 'Informe o nome do representante legal.'],
-  ['representante_cargo', 'Informe o cargo/função do representante.'],
+  ['nome_empresarial', 'Informe o nome da empresa.'],
+  ['endereco', 'Informe o endereço completo.'],
+  ['ramo_atividade', 'Informe o ramo de atividade.'],
+  ['representante_nome', 'Informe o nome do representante ou procurador.'],
 ];
 
 function validateForm() {
@@ -133,14 +143,6 @@ function validateForm() {
     clearError('cnpj');
   }
 
-  const telDigits = onlyDigits(document.getElementById('telefone').value);
-  if (telDigits.length < 10) {
-    setError('telefone', 'Informe um telefone válido, com DDD.');
-    valid = false;
-  } else {
-    clearError('telefone');
-  }
-
   const emailValue = document.getElementById('email').value.trim();
   if (!validateEmail(emailValue)) {
     setError('email', 'Informe um e-mail válido.');
@@ -149,12 +151,36 @@ function validateForm() {
     clearError('email');
   }
 
+  const telDigits = onlyDigits(document.getElementById('telefone').value);
+  if (telDigits.length < 10) {
+    setError('telefone', 'Informe um telefone válido, com DDD.');
+    valid = false;
+  } else {
+    clearError('telefone');
+  }
+
   const cpfDigits = onlyDigits(document.getElementById('representante_cpf').value);
   if (cpfDigits.length !== 11) {
     setError('representante_cpf', 'CPF deve ter 11 dígitos.');
     valid = false;
   } else {
     clearError('representante_cpf');
+  }
+
+  const repTelDigits = onlyDigits(document.getElementById('representante_telefone').value);
+  if (repTelDigits.length < 10) {
+    setError('representante_telefone', 'Informe um telefone válido, com DDD.');
+    valid = false;
+  } else {
+    clearError('representante_telefone');
+  }
+
+  const repEmailValue = document.getElementById('representante_email').value.trim();
+  if (!validateEmail(repEmailValue)) {
+    setError('representante_email', 'Informe um e-mail válido.');
+    valid = false;
+  } else {
+    clearError('representante_email');
   }
 
   if (!document.getElementById('termo_empresa_aceito').checked) {
@@ -171,14 +197,11 @@ function validateForm() {
     clearError('termo_codego_aceito');
   }
 
-  const arquivoCnpjValido = validarArquivo(document.getElementById('arquivo_cnpj'), 'arquivo_cnpj');
-  const arquivoContratoValido = validarArquivo(
-    document.getElementById('arquivo_contrato_social'),
-    'arquivo_contrato_social'
-  );
-  if (!arquivoCnpjValido || !arquivoContratoValido) {
-    valid = false;
-  }
+  ARQUIVOS.forEach((inputId) => {
+    if (!validarArquivo(inputId)) {
+      valid = false;
+    }
+  });
 
   return valid;
 }
@@ -221,16 +244,18 @@ form.addEventListener('submit', async (event) => {
   formData.append('nome_empresarial', document.getElementById('nome_empresarial').value.trim());
   formData.append('cnpj', document.getElementById('cnpj').value);
   formData.append('endereco', document.getElementById('endereco').value.trim());
-  formData.append('distrito', document.getElementById('distrito').value.trim());
-  formData.append('telefone', document.getElementById('telefone').value);
   formData.append('email', document.getElementById('email').value.trim());
+  formData.append('telefone', document.getElementById('telefone').value);
+  formData.append('ramo_atividade', document.getElementById('ramo_atividade').value.trim());
   formData.append('representante_nome', document.getElementById('representante_nome').value.trim());
   formData.append('representante_cpf', document.getElementById('representante_cpf').value);
-  formData.append('representante_cargo', document.getElementById('representante_cargo').value.trim());
+  formData.append('representante_telefone', document.getElementById('representante_telefone').value);
+  formData.append('representante_email', document.getElementById('representante_email').value.trim());
   formData.append('termo_empresa_aceito', document.getElementById('termo_empresa_aceito').checked);
   formData.append('termo_codego_aceito', document.getElementById('termo_codego_aceito').checked);
-  formData.append('arquivo_cnpj', document.getElementById('arquivo_cnpj').files[0]);
-  formData.append('arquivo_contrato_social', document.getElementById('arquivo_contrato_social').files[0]);
+  ARQUIVOS.forEach((inputId) => {
+    formData.append(inputId, document.getElementById(inputId).files[0]);
+  });
 
   setLoading(true);
 

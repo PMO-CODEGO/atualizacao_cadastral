@@ -22,30 +22,32 @@ async def criar_atualizacao_cadastral(
     nome_empresarial: str = Form(...),
     cnpj: str = Form(...),
     endereco: str = Form(...),
-    distrito: str = Form(...),
-    telefone: str = Form(...),
     email: str = Form(...),
+    telefone: str = Form(...),
+    ramo_atividade: str = Form(...),
     representante_nome: str = Form(...),
     representante_cpf: str = Form(...),
-    representante_cargo: str = Form(...),
+    representante_telefone: str = Form(...),
+    representante_email: str = Form(...),
     termo_empresa_aceito: bool = Form(...),
     termo_codego_aceito: bool = Form(...),
     arquivo_cnpj: UploadFile = File(...),
     arquivo_contrato_social: UploadFile = File(...),
+    arquivo_certidao_matricula: UploadFile = File(...),
+    arquivo_contrato_ou_procuracao: UploadFile = File(...),
+    arquivo_documento_identidade: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
     """
-    Recebe a solicitação de atualização cadastral (dados + 2 PDFs), valida tudo,
+    Recebe a solicitação de atualização cadastral (dados + 5 PDFs), valida tudo,
     gera um protocolo único, salva os arquivos, grava no banco e envia o e-mail
     de confirmação (com os PDFs em anexo) para o e-mail fixo da empresa.
     """
-    # Validação dos campos de texto
     campos_obrigatorios = {
         "nome_empresarial": nome_empresarial,
         "endereco": endereco,
-        "distrito": distrito,
+        "ramo_atividade": ramo_atividade,
         "representante_nome": representante_nome,
-        "representante_cargo": representante_cargo,
     }
     for nome_campo, valor in campos_obrigatorios.items():
         if not valor or not valor.strip():
@@ -55,6 +57,7 @@ async def criar_atualizacao_cadastral(
         cnpj_digits = validar_cnpj(cnpj)
         representante_cpf_digits = validar_cpf(representante_cpf)
         telefone_digits = validar_telefone(telefone)
+        representante_telefone_digits = validar_telefone(representante_telefone)
     except ValueError as erro:
         raise HTTPException(status_code=422, detail=str(erro))
 
@@ -64,12 +67,19 @@ async def criar_atualizacao_cadastral(
             detail="É necessário aceitar os dois termos para enviar a atualização cadastral.",
         )
 
-    # Validação dos arquivos
-    conteudo_cnpj = await arquivo_cnpj.read()
-    validar_pdf(arquivo_cnpj, conteudo_cnpj, "CNPJ")
-
-    conteudo_contrato = await arquivo_contrato_social.read()
-    validar_pdf(arquivo_contrato_social, conteudo_contrato, "Contrato Social")
+    # Validação dos 5 arquivos
+    arquivos_para_validar = [
+        (arquivo_cnpj, "Comprovante de Inscrição CNPJ"),
+        (arquivo_contrato_social, "Cópia do Contrato Social"),
+        (arquivo_certidao_matricula, "Certidão de Matrícula do Imóvel"),
+        (arquivo_contrato_ou_procuracao, "Contrato Social ou Procuração"),
+        (arquivo_documento_identidade, "Documento de Identidade"),
+    ]
+    conteudos = {}
+    for arquivo, nome_campo in arquivos_para_validar:
+        conteudo = await arquivo.read()
+        validar_pdf(arquivo, conteudo, nome_campo)
+        conteudos[nome_campo] = conteudo
 
     # Protocolo único
     protocolo = gerar_protocolo()
@@ -77,9 +87,26 @@ async def criar_atualizacao_cadastral(
         protocolo = gerar_protocolo()
 
     # Salva os arquivos
-    caminho_cnpj = salvar_arquivo(conteudo_cnpj, settings.upload_dir, f"{protocolo}_cnpj.pdf")
-    caminho_contrato = salvar_arquivo(
-        conteudo_contrato, settings.upload_dir, f"{protocolo}_contrato_social.pdf"
+    caminho_cnpj = salvar_arquivo(
+        conteudos["Comprovante de Inscrição CNPJ"], settings.upload_dir, f"{protocolo}_cnpj.pdf"
+    )
+    caminho_contrato_social = salvar_arquivo(
+        conteudos["Cópia do Contrato Social"], settings.upload_dir, f"{protocolo}_contrato_social.pdf"
+    )
+    caminho_certidao = salvar_arquivo(
+        conteudos["Certidão de Matrícula do Imóvel"],
+        settings.upload_dir,
+        f"{protocolo}_certidao_matricula.pdf",
+    )
+    caminho_contrato_ou_procuracao = salvar_arquivo(
+        conteudos["Contrato Social ou Procuração"],
+        settings.upload_dir,
+        f"{protocolo}_contrato_ou_procuracao.pdf",
+    )
+    caminho_documento_identidade = salvar_arquivo(
+        conteudos["Documento de Identidade"],
+        settings.upload_dir,
+        f"{protocolo}_documento_identidade.pdf",
     )
 
     # Grava no banco
@@ -88,28 +115,38 @@ async def criar_atualizacao_cadastral(
         nome_empresarial=nome_empresarial.strip(),
         cnpj=cnpj_digits,
         endereco=endereco.strip(),
-        distrito=distrito.strip(),
-        telefone=telefone_digits,
         email=email.strip(),
+        telefone=telefone_digits,
+        ramo_atividade=ramo_atividade.strip(),
         representante_nome=representante_nome.strip(),
         representante_cpf=representante_cpf_digits,
-        representante_cargo=representante_cargo.strip(),
+        representante_telefone=representante_telefone_digits,
+        representante_email=representante_email.strip(),
         termo_empresa_aceito=termo_empresa_aceito,
         termo_codego_aceito=termo_codego_aceito,
         caminho_pdf_cnpj=caminho_cnpj,
-        caminho_pdf_contrato_social=caminho_contrato,
+        caminho_pdf_contrato_social=caminho_contrato_social,
+        caminho_pdf_certidao_matricula=caminho_certidao,
+        caminho_pdf_contrato_ou_procuracao=caminho_contrato_ou_procuracao,
+        caminho_pdf_documento_identidade=caminho_documento_identidade,
     )
     db.add(registro)
     db.commit()
     db.refresh(registro)
 
-    # E-mail de confirmação (sempre para o e-mail fixo da empresa, com os 2 PDFs em anexo)
+    # E-mail de confirmação (sempre para o e-mail fixo da empresa, com os 5 PDFs em anexo)
     destinatario = settings.notification_email or email.strip()
     email_enviado, email_erro = enviar_email_atualizacao_cadastral(
         destinatario_email=destinatario,
         nome_empresarial=registro.nome_empresarial,
         protocolo=protocolo,
-        caminhos_anexos=[caminho_cnpj, caminho_contrato],
+        caminhos_anexos=[
+            caminho_cnpj,
+            caminho_contrato_social,
+            caminho_certidao,
+            caminho_contrato_ou_procuracao,
+            caminho_documento_identidade,
+        ],
     )
 
     registro.email_enviado = email_enviado

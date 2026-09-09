@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict
 
 
 class AtualizacaoCadastralOut(BaseModel):
@@ -11,12 +11,13 @@ class AtualizacaoCadastralOut(BaseModel):
     nome_empresarial: str
     cnpj: str
     endereco: str
-    distrito: str
-    telefone: str
     email: str
+    telefone: str
+    ramo_atividade: str
     representante_nome: str
     representante_cpf: str
-    representante_cargo: str
+    representante_telefone: str
+    representante_email: str
     termo_empresa_aceito: bool
     termo_codego_aceito: bool
     email_enviado: bool | None

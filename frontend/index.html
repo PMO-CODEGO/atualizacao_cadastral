@@ -21,8 +21,8 @@
       <div class="card__intro">
         <h2 class="card__title">Solicitação de Atualização Cadastral</h2>
         <p class="card__desc">
-          Leia os dois termos abaixo, anexe os documentos exigidos (CNPJ e Contrato
-          Social, em PDF) e preencha os dados da empresa e do representante legal.
+          Leia os dois termos abaixo, anexe os documentos exigidos e preencha os
+          dados da empresa e do representante legal ou procurador.
         </p>
       </div>
 
@@ -55,10 +55,22 @@ Responsabilidade pela Segurança dos Dados: A CODEGO se responsabiliza por mante
           <p class="field__error" data-error-for="termo_codego_aceito"></p>
         </div>
 
-        <h3 class="section-title">Documentos</h3>
+        <h3 class="section-title">Dados da empresa</h3>
 
         <div class="field">
-          <label for="arquivo_cnpj">CNPJ (PDF)</label>
+          <label for="nome_empresarial">Nome da Empresa (Razão Social)</label>
+          <input type="text" id="nome_empresarial" name="nome_empresarial" required>
+          <p class="field__error" data-error-for="nome_empresarial"></p>
+        </div>
+
+        <div class="field">
+          <label for="cnpj">Registro número do CNPJ</label>
+          <input type="text" id="cnpj" name="cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" required>
+          <p class="field__error" data-error-for="cnpj"></p>
+        </div>
+
+        <div class="field">
+          <label for="arquivo_cnpj">Emissão de Comprovante de Inscrição Receita Federal — Cartão CNPJ (PDF)</label>
           <div class="file-drop">
             <input type="file" id="arquivo_cnpj" name="arquivo_cnpj" accept="application/pdf" required>
             <p class="file-drop__hint">Somente PDF, até 10MB.</p>
@@ -68,7 +80,7 @@ Responsabilidade pela Segurança dos Dados: A CODEGO se responsabiliza por mante
         </div>
 
         <div class="field">
-          <label for="arquivo_contrato_social">Contrato Social (PDF)</label>
+          <label for="arquivo_contrato_social">Cópia do Contrato Social (última alteração) (PDF)</label>
           <div class="file-drop">
             <input type="file" id="arquivo_contrato_social" name="arquivo_contrato_social" accept="application/pdf" required>
             <p class="file-drop__hint">Somente PDF, até 10MB.</p>
@@ -77,66 +89,88 @@ Responsabilidade pela Segurança dos Dados: A CODEGO se responsabiliza por mante
           <p class="field__error" data-error-for="arquivo_contrato_social"></p>
         </div>
 
-        <h3 class="section-title">Dados da empresa</h3>
-
         <div class="field">
-          <label for="nome_empresarial">Nome Empresarial / Razão Social</label>
-          <input type="text" id="nome_empresarial" name="nome_empresarial" required>
-          <p class="field__error" data-error-for="nome_empresarial"></p>
-        </div>
-
-        <div class="field">
-          <label for="cnpj">CNPJ</label>
-          <input type="text" id="cnpj" name="cnpj" inputmode="numeric" placeholder="00.000.000/0000-00" required>
-          <p class="field__error" data-error-for="cnpj"></p>
-        </div>
-
-        <div class="field">
-          <label for="endereco">Endereço completo da empresa</label>
-          <input type="text" id="endereco" name="endereco" placeholder="Rua, número, bairro, cidade-UF" required>
+          <label for="endereco">Endereço (Distrito / Logradouro / Quadra / Módulo / CEP)</label>
+          <input type="text" id="endereco" name="endereco" placeholder="Ex.: Distrito X, Rua Y, Quadra Z, Módulo W, CEP 00000-000" required>
           <p class="field__error" data-error-for="endereco"></p>
         </div>
 
-        <div class="field">
-          <label for="distrito">Distrito/Loteamento vinculado</label>
-          <input type="text" id="distrito" name="distrito" required>
-          <p class="field__error" data-error-for="distrito"></p>
-        </div>
-
         <div class="field-row">
-          <div class="field">
-            <label for="telefone">Telefone</label>
-            <input type="tel" id="telefone" name="telefone" inputmode="tel" placeholder="(00) 00000-0000" required>
-            <p class="field__error" data-error-for="telefone"></p>
-          </div>
-
           <div class="field">
             <label for="email">E-mail</label>
             <input type="email" id="email" name="email" autocomplete="email" required>
             <p class="field__error" data-error-for="email"></p>
           </div>
+
+          <div class="field">
+            <label for="telefone">Telefone</label>
+            <input type="tel" id="telefone" name="telefone" inputmode="tel" placeholder="(00) 00000-0000" required>
+            <p class="field__error" data-error-for="telefone"></p>
+          </div>
         </div>
 
-        <h3 class="section-title">Representante legal</h3>
+        <div class="field">
+          <label for="ramo_atividade">Ramo de Atividade</label>
+          <input type="text" id="ramo_atividade" name="ramo_atividade" required>
+          <p class="field__error" data-error-for="ramo_atividade"></p>
+        </div>
 
         <div class="field">
-          <label for="representante_nome">Nome do representante legal</label>
+          <label for="arquivo_certidao_matricula">Certidão de Matrícula do Imóvel (PDF)</label>
+          <div class="file-drop">
+            <input type="file" id="arquivo_certidao_matricula" name="arquivo_certidao_matricula" accept="application/pdf" required>
+            <p class="file-drop__hint">Somente PDF, até 10MB.</p>
+            <p class="file-drop__selected" id="arquivo_certidao_matricula-selecionado" hidden></p>
+          </div>
+          <p class="field__error" data-error-for="arquivo_certidao_matricula"></p>
+        </div>
+
+        <h3 class="section-title">Representante legal ou procurador</h3>
+
+        <div class="field">
+          <label for="representante_nome">Nome</label>
           <input type="text" id="representante_nome" name="representante_nome" autocomplete="name" required>
           <p class="field__error" data-error-for="representante_nome"></p>
         </div>
 
+        <div class="field">
+          <label for="representante_cpf">CPF</label>
+          <input type="text" id="representante_cpf" name="representante_cpf" inputmode="numeric" placeholder="000.000.000-00" required>
+          <p class="field__error" data-error-for="representante_cpf"></p>
+        </div>
+
         <div class="field-row">
           <div class="field">
-            <label for="representante_cpf">CPF do representante legal</label>
-            <input type="text" id="representante_cpf" name="representante_cpf" inputmode="numeric" placeholder="000.000.000-00" required>
-            <p class="field__error" data-error-for="representante_cpf"></p>
+            <label for="representante_telefone">Telefone</label>
+            <input type="tel" id="representante_telefone" name="representante_telefone" inputmode="tel" placeholder="(00) 00000-0000" required>
+            <p class="field__error" data-error-for="representante_telefone"></p>
           </div>
 
           <div class="field">
-            <label for="representante_cargo">Cargo/função do representante</label>
-            <input type="text" id="representante_cargo" name="representante_cargo" required>
-            <p class="field__error" data-error-for="representante_cargo"></p>
+            <label for="representante_email">E-mail</label>
+            <input type="email" id="representante_email" name="representante_email" autocomplete="email" required>
+            <p class="field__error" data-error-for="representante_email"></p>
           </div>
+        </div>
+
+        <div class="field">
+          <label for="arquivo_contrato_ou_procuracao">Contrato Social ou Procuração (PDF)</label>
+          <div class="file-drop">
+            <input type="file" id="arquivo_contrato_ou_procuracao" name="arquivo_contrato_ou_procuracao" accept="application/pdf" required>
+            <p class="file-drop__hint">Somente PDF, até 10MB.</p>
+            <p class="file-drop__selected" id="arquivo_contrato_ou_procuracao-selecionado" hidden></p>
+          </div>
+          <p class="field__error" data-error-for="arquivo_contrato_ou_procuracao"></p>
+        </div>
+
+        <div class="field">
+          <label for="arquivo_documento_identidade">Documentos de Identidade (PDF)</label>
+          <div class="file-drop">
+            <input type="file" id="arquivo_documento_identidade" name="arquivo_documento_identidade" accept="application/pdf" required>
+            <p class="file-drop__hint">Somente PDF, até 10MB.</p>
+            <p class="file-drop__selected" id="arquivo_documento_identidade-selecionado" hidden></p>
+          </div>
+          <p class="field__error" data-error-for="arquivo_documento_identidade"></p>
         </div>
 
         <div class="card__footer">
