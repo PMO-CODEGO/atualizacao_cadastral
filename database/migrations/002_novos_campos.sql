@@ -4,8 +4,8 @@
 -- Endereço) e Cargo do representante.
 
 ALTER TABLE atualizacoes_cadastrais
-    DROP COLUMN IF EXISTS distrito,
-    DROP COLUMN IF EXISTS representante_cargo,
+    DROP COLUMN distrito,
+    DROP COLUMN representante_cargo,
     ADD COLUMN ramo_atividade VARCHAR(255) NOT NULL DEFAULT '' AFTER telefone,
     ADD COLUMN representante_telefone VARCHAR(30) NOT NULL DEFAULT '' AFTER representante_cpf,
     ADD COLUMN representante_email VARCHAR(255) NOT NULL DEFAULT '' AFTER representante_telefone,
