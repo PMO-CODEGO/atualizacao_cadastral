@@ -95,16 +95,28 @@ function validateEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+const EXTENSOES_PERMITIDAS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+const MIME_PERMITIDOS = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/zip', // alguns navegadores relatam .docx/.xlsx como zip genérico
+];
+
 function validarArquivo(inputId) {
   const input = document.getElementById(inputId);
   const file = input.files[0];
   if (!file) {
-    setError(inputId, 'Selecione o arquivo em PDF.');
+    setError(inputId, 'Selecione o arquivo (PDF, Word ou Excel).');
     return false;
   }
   const nomeArquivo = file.name.toLowerCase();
-  if (!nomeArquivo.endsWith('.pdf') || file.type !== 'application/pdf') {
-    setError(inputId, 'O arquivo deve estar no formato PDF.');
+  const extensaoValida = EXTENSOES_PERMITIDAS.some((ext) => nomeArquivo.endsWith(ext));
+  const mimeValido = MIME_PERMITIDOS.includes(file.type) || file.type === '';
+  if (!extensaoValida || !mimeValido) {
+    setError(inputId, 'O arquivo deve ser PDF, Word (.doc/.docx) ou Excel (.xls/.xlsx).');
     return false;
   }
   if (file.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024) {

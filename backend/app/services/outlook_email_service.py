@@ -17,7 +17,7 @@ def _montar_corpo_html(nome_empresarial: str, protocolo: str) -> str:
       <p>Olá,</p>
       <p>
         Confirmamos o recebimento da solicitação de atualização cadastral da empresa
-        <strong>{nome_empresarial}</strong>, com os documentos anexados (CNPJ e Contrato Social).
+        <strong>{nome_empresarial}</strong>, com os documentos em anexo (compactados em um único arquivo .zip).
       </p>
       <p style="font-family: monospace; background: #f2f2f2; padding: 8px 12px; display: inline-block;">
         Protocolo: <strong>{protocolo}</strong>
@@ -48,15 +48,25 @@ def enviar_email_atualizacao_cadastral_outlook(
         return False, erro_token
 
     anexos_graph = []
+    tipos_mime_por_extensao = {
+        ".pdf": "application/pdf",
+        ".zip": "application/zip",
+        ".doc": "application/msword",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".xls": "application/vnd.ms-excel",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }
     for caminho in caminhos_anexos:
         try:
             with open(caminho, "rb") as f:
                 anexo_base64 = base64.b64encode(f.read()).decode("ascii")
+            ext = os.path.splitext(caminho)[1].lower()
+            content_type = tipos_mime_por_extensao.get(ext, "application/octet-stream")
             anexos_graph.append(
                 {
                     "@odata.type": "#microsoft.graph.fileAttachment",
                     "name": os.path.basename(caminho),
-                    "contentType": "application/pdf",
+                    "contentType": content_type,
                     "contentBytes": anexo_base64,
                 }
             )
