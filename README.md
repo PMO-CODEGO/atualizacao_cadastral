@@ -76,6 +76,26 @@ atualizacao_cadastral/
 - CPF do representante legal
 - Cargo/função do representante
 
+## Deploy do front-end no Netlify
+
+O `netlify.toml` na raiz já configura o Netlify para publicar a pasta
+`frontend/` (não precisa mover nenhum arquivo nem mexer nas configurações
+manuais do painel — funciona automaticamente com o site conectado ao GitHub).
+
+**Importante:** o Netlify só hospeda o front-end (arquivos estáticos). O
+back-end (FastAPI) continua precisando rodar em outro lugar (seu Docker local,
+ou um serviço como Render/Railway/EC2). Depois de hospedar o back-end em algum
+endereço público, aponte o front-end pra ele definindo `window.CODEGO_API_BASE_URL`
+antes do `js/main.js` carregar — por exemplo, adicionando isto no `<head>` do
+`frontend/index.html`:
+
+```html
+<script>window.CODEGO_API_BASE_URL = 'https://sua-api-em-producao.com';</script>
+```
+
+Sem isso, o front-end publicado no Netlify vai tentar falar com
+`http://localhost:8001` (o padrão), que não existe fora da sua máquina.
+
 ## Setup local
 
 ```bash

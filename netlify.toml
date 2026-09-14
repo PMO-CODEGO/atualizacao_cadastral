@@ -1,0 +1,8 @@
+# Configuração de build/deploy do Netlify.
+# Não precisa mexer nas configurações manuais do painel Netlify -- este
+# arquivo já diz pro Netlify onde fica o site (pasta frontend/), sem
+# precisar mover nenhum arquivo do projeto.
+
+[build]
+  base = "frontend"
+  publish = "."
