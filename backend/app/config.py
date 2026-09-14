@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
@@ -7,6 +8,12 @@ class Settings(BaseSettings):
     mysql_database: str = "atualizacao_cadastral"
     mysql_user: str = "codego_app"
     mysql_password: str = "change_me"
+
+    # Quando hospedado em serviços como o Render, a plataforma injeta essa
+    # variável automaticamente com a string de conexão do banco (Postgres).
+    # Se estiver presente, ela tem prioridade sobre as variáveis MYSQL_*
+    # acima (usadas no Docker local). Não precisa mexer nisso pra rodar local.
+    raw_database_url: str = Field(default="", validation_alias="DATABASE_URL")
 
     app_env: str = "development"
     app_secret_key: str = "change_me_secret"
@@ -44,6 +51,14 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
+        if self.raw_database_url:
+            # Normaliza o esquema antigo "postgres://" (usado por algumas
+            # plataformas) para o que o SQLAlchemy 2.x exige: "postgresql://"
+            url = self.raw_database_url
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql://", 1)
+            return url
+
         return (
             f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}"
             f"@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}"
