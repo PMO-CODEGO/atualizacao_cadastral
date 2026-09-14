@@ -116,6 +116,13 @@ Responsabilidade pela Segurança dos Dados: A CODEGO se responsabiliza por mante
         </div>
 
         <div class="field">
+          <label for="previsao_geracao_empregos">Previsão de geração de empregos (direto e indireto)</label>
+          <input type="text" id="previsao_geracao_empregos" name="previsao_geracao_empregos" placeholder="Ex.: 10 diretos e 15 indiretos" required>
+          <p class="field__hint">Os dados informados são autodeclaratórios e serão utilizados exclusivamente para fins estatísticos.</p>
+          <p class="field__error" data-error-for="previsao_geracao_empregos"></p>
+        </div>
+
+        <div class="field">
           <label for="arquivo_certidao_matricula">Certidão de Matrícula do Imóvel (PDF)</label>
           <div class="file-drop">
             <input type="file" id="arquivo_certidao_matricula" name="arquivo_certidao_matricula" accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>

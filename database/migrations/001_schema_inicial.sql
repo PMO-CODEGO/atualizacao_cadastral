@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS atualizacoes_cadastrais (
     email VARCHAR(255) NOT NULL,
     telefone VARCHAR(30) NOT NULL,
     ramo_atividade VARCHAR(255) NOT NULL,
+    previsao_geracao_empregos VARCHAR(255) NOT NULL,
 
     representante_nome VARCHAR(255) NOT NULL,
     representante_cpf VARCHAR(20) NOT NULL,
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS atualizacoes_cadastrais (
     termo_empresa_aceito BOOLEAN NOT NULL DEFAULT FALSE,
     termo_codego_aceito BOOLEAN NOT NULL DEFAULT FALSE,
 
+    caminho_pdf_formulario VARCHAR(500) NOT NULL,
     caminho_pdf_cnpj VARCHAR(500) NOT NULL,
     caminho_pdf_contrato_social VARCHAR(500) NOT NULL,
     caminho_pdf_certidao_matricula VARCHAR(500) NOT NULL,

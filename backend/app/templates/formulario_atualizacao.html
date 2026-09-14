@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {
+      size: A4;
+      margin: 2cm 2cm 2.2cm;
+    }
+    body {
+      font-family: "Helvetica", "Arial", sans-serif;
+      font-size: 10.5pt;
+      color: #1a1a1a;
+    }
+
+    /* Cabeçalho / timbre */
+    .timbre {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1.5pt solid #1f6d46;
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+    }
+    .timbre img {
+      height: 40px;
+      width: auto;
+    }
+    .timbre__texto {
+      font-size: 8pt;
+      font-weight: bold;
+      color: #1f6d46;
+      line-height: 1.25;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 13pt;
+      text-transform: uppercase;
+      color: #123f28;
+      margin: 0 0 4px;
+    }
+    .subtitulo {
+      font-size: 9pt;
+      color: #555;
+      margin: 0 0 18px;
+    }
+
+    .secao-titulo {
+      font-size: 10.5pt;
+      font-weight: bold;
+      color: #123f28;
+      background: #eef0e6;
+      padding: 6px 10px;
+      margin: 18px 0 0;
+      border-left: 3pt solid #1f6d46;
+    }
+
+    table.dados {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 4px;
+    }
+    table.dados td {
+      border: 1pt solid #ccc;
+      border-top: none;
+      padding: 6px 10px;
+      vertical-align: top;
+    }
+    table.dados tr:first-child td {
+      border-top: 1pt solid #ccc;
+    }
+    table.dados td.rotulo {
+      width: 34%;
+      font-weight: bold;
+      background: #f7f7f5;
+      color: #333;
+    }
+
+    .disclaimer {
+      font-size: 8pt;
+      font-style: italic;
+      color: #666;
+      margin: 4px 0 0;
+      padding: 6px 10px;
+    }
+
+    .data-emissao {
+      text-align: right;
+      margin-top: 24px;
+      font-size: 9.5pt;
+      color: #444;
+    }
+
+    .protocolo-rodape {
+      position: fixed;
+      bottom: 0.8cm;
+      right: 2cm;
+      font-size: 7.5pt;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="timbre">
+    <img src="{{ brasao_data_uri }}" alt="Brasão CODEGO">
+    <div class="timbre__texto">
+      Companhia de Desenvolvimento<br>
+      Econômico de Goiás
+    </div>
+  </div>
+
+  <h1>Formulário de Atualização Cadastral</h1>
+  <p class="subtitulo">Protocolo: {{ protocolo }}</p>
+
+  <p class="secao-titulo">Dados da Empresa</p>
+  <table class="dados">
+    <tr>
+      <td class="rotulo">Nome Empresarial (Razão Social)</td>
+      <td>{{ nome_empresarial }}</td>
+    </tr>
+    <tr>
+      <td class="rotulo">CNPJ</td>
+      <td>{{ cnpj }}</td>
+    </tr>
+    <tr>
+      <td class="rotulo">Endereço</td>
+      <td>{{ endereco }}</td>
+    </tr>
+    <tr>
+      <td class="rotulo">E-mail</td>
+      <td>{{ email }}</td>
+    </tr>
+    <tr>
+      <td class="rotulo">Telefone</td>
+      <td>{{ telefone }}</td>
+    </tr>
+    <tr>
+      <td class="rotulo">Ramo de Atividade</td>
+      <td>{{ ramo_atividade }}</td>
+    </tr>
+    <tr>
+      <td class="rotulo">Previsão de geração de empregos (direto e indireto)</td>
+      <td>{{ previsao_geracao_empregos }}</td>
+    </tr>
+  </table>
+  <p class="disclaimer">
+    Os dados informados são autodeclaratórios e serão utilizados exclusivamente para fins estatísticos.
+  </p>
+
+  <p class="secao-titulo">Representante Legal ou Procurador</p>
+  <table class="dados">
+    <tr>
+      <td class="rotulo">Nome</td>
+      <td>{{ representante_nome }}</td>
+    </tr>
+    <tr>
+      <td class="rotulo">CPF</td>
+      <td>{{ representante_cpf }}</td>
+    </tr>
+    <tr>
+      <td class="rotulo">Telefone</td>
+      <td>{{ representante_telefone }}</td>
+    </tr>
+    <tr>
+      <td class="rotulo">E-mail</td>
+      <td>{{ representante_email }}</td>
+    </tr>
+  </table>
+
+  <p class="data-emissao">{{ data_emissao }}</p>
+
+  <div class="protocolo-rodape">Protocolo: {{ protocolo }}</div>
+
+</body>
+</html>

@@ -131,6 +131,7 @@ const CAMPOS_TEXTO_OBRIGATORIOS = [
   ['nome_empresarial', 'Informe o nome da empresa.'],
   ['endereco', 'Informe o endereço completo.'],
   ['ramo_atividade', 'Informe o ramo de atividade.'],
+  ['previsao_geracao_empregos', 'Informe a previsão de geração de empregos.'],
   ['representante_nome', 'Informe o nome do representante ou procurador.'],
 ];
 
@@ -259,6 +260,7 @@ form.addEventListener('submit', async (event) => {
   formData.append('email', document.getElementById('email').value.trim());
   formData.append('telefone', document.getElementById('telefone').value);
   formData.append('ramo_atividade', document.getElementById('ramo_atividade').value.trim());
+  formData.append('previsao_geracao_empregos', document.getElementById('previsao_geracao_empregos').value.trim());
   formData.append('representante_nome', document.getElementById('representante_nome').value.trim());
   formData.append('representante_cpf', document.getElementById('representante_cpf').value);
   formData.append('representante_telefone', document.getElementById('representante_telefone').value);
@@ -292,10 +294,15 @@ form.addEventListener('submit', async (event) => {
       ? `<p class="feedback__email-status feedback__email-status--ok">✓ Uma cópia foi enviada para ${data.email_destinatario}.</p>`
       : `<p class="feedback__email-status feedback__email-status--warn">Os dados foram salvos, mas não foi possível enviar a confirmação por e-mail.${data.email_erro ? ` <code>${data.email_erro}</code>` : ''}</p>`;
 
+    const pdfUrl = `${API_BASE_URL}${data.pdf_download_url}`;
+
     showFeedback(
       `<p class="feedback__title">Atualização cadastral enviada com sucesso</p>
        <p class="feedback__protocolo">Protocolo: ${protocolo}</p>
-       ${avisoEmail}`,
+       ${avisoEmail}
+       <div class="feedback__actions">
+         <a class="feedback__link" href="${pdfUrl}" target="_blank" rel="noopener">Baixar PDF do cadastro</a>
+       </div>`,
       'success'
     );
 

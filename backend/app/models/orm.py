@@ -16,6 +16,7 @@ class AtualizacaoCadastral(Base):
     email = Column(String(255), nullable=False)
     telefone = Column(String(30), nullable=False)
     ramo_atividade = Column(String(255), nullable=False)
+    previsao_geracao_empregos = Column(String(255), nullable=False)
 
     # Representante legal ou procurador
     representante_nome = Column(String(255), nullable=False)
@@ -26,6 +27,9 @@ class AtualizacaoCadastral(Base):
     # Termos aceitos
     termo_empresa_aceito = Column(Boolean, nullable=False, default=False)
     termo_codego_aceito = Column(Boolean, nullable=False, default=False)
+
+    # PDF do formulário gerado (timbrado, com todos os dados do cadastro)
+    caminho_pdf_formulario = Column(String(500), nullable=False)
 
     # Arquivos anexados (empresa)
     caminho_pdf_cnpj = Column(String(500), nullable=False)

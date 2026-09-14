@@ -337,6 +337,13 @@ input:focus-visible {
   min-height: 14px;
 }
 
+.field__hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
 .field__with-toggle {
   display: flex;
   gap: 10px;

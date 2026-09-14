@@ -14,6 +14,7 @@ class AtualizacaoCadastralOut(BaseModel):
     email: str
     telefone: str
     ramo_atividade: str
+    previsao_geracao_empregos: str
     representante_nome: str
     representante_cpf: str
     representante_telefone: str
@@ -29,6 +30,7 @@ class AtualizacaoCadastralResponse(BaseModel):
     email_enviado: bool
     email_destinatario: str
     email_erro: str | None = None
+    pdf_download_url: str
 
 
 def validar_cnpj(v: str) -> str:
