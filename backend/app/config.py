@@ -26,7 +26,9 @@ class Settings(BaseSettings):
     # E-mail fixo da empresa que recebe TODAS as solicitações de atualização cadastral
     notification_email: str = ""
 
-    # E-mail — provider "smtp" (Gmail, Brevo, etc.) ou "outlook_graph" (Microsoft Graph, para Outlook/Hotmail)
+    # E-mail — provider "smtp" (Gmail, Brevo, etc.), "outlook_graph" (Microsoft
+    # Graph, para Outlook/Hotmail), "formsubmit" ou "brevo_api" (API HTTPS da
+    # Brevo, sem SMTP)
     email_provider: str = "smtp"
 
     # E-mail (SMTP)
@@ -38,6 +40,10 @@ class Settings(BaseSettings):
     smtp_from_email: str = ""
     smtp_from_name: str = "Sistema de Atualização Cadastral CODEGO"
     smtp_enabled: bool = False
+
+    # E-mail via API HTTPS da Brevo (EMAIL_PROVIDER=brevo_api)
+    brevo_api_key: str = ""
+    brevo_sender_email: str = ""
 
     # Outlook via Microsoft Graph (OAuth2)
     outlook_client_id: str = ""
