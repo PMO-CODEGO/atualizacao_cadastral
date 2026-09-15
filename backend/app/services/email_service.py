@@ -19,7 +19,7 @@ def enviar_email_atualizacao_cadastral(
 ) -> tuple[bool, str | None]:
     """
     Envia um e-mail de confirmação de recebimento da atualização cadastral, com
-    os documentos em anexo (compactados em um .zip). Escolhe a implementação conforme
+    os documentos em anexo (cada um separadamente). Escolhe a implementação conforme
     settings.email_provider ("smtp", "outlook_graph", "formsubmit" ou
     "brevo_api"). Retorna (True, None) se o envio foi bem-sucedido, ou
     (False, mensagem_de_erro) caso contrário — nunca levanta exceção.
@@ -52,8 +52,7 @@ def _montar_corpo_texto(nome_empresarial: str, protocolo: str) -> str:
     return (
         f"Olá,\n\n"
         f"Confirmamos o recebimento da solicitação de atualização cadastral da "
-        f"empresa {nome_empresarial}, com os documentos em anexo "
-        f"(compactados em um único arquivo .zip).\n\n"
+        f"empresa {nome_empresarial}, com os documentos em anexo.\n\n"
         f"Protocolo: {protocolo}\n\n"
         f"Este e-mail confirma que os dados e arquivos foram recebidos pelo "
         f"Sistema de Atualização Cadastral CODEGO.\n\n"
@@ -68,7 +67,7 @@ def _montar_corpo_html(nome_empresarial: str, protocolo: str) -> str:
       <p>Olá,</p>
       <p>
         Confirmamos o recebimento da solicitação de atualização cadastral da empresa
-        <strong>{nome_empresarial}</strong>, com os documentos em anexo (compactados em um único arquivo .zip).
+        <strong>{nome_empresarial}</strong>, com os documentos em anexo.
       </p>
       <p style="font-family: monospace; background: #f2f2f2; padding: 8px 12px; display: inline-block;">
         Protocolo: <strong>{protocolo}</strong>

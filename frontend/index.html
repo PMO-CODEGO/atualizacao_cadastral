@@ -6,6 +6,7 @@
   <title>Atualização Cadastral — CODEGO</title>
   <link rel="stylesheet" href="css/style.css">
   <script>window.CODEGO_API_BASE_URL = 'https://atualizacao-cadastral-0cay.onrender.com';</script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
   <div class="page">
@@ -179,6 +180,11 @@ Responsabilidade pela Segurança dos Dados: A CODEGO se responsabiliza por mante
             <p class="file-drop__selected" id="arquivo_documento_identidade-selecionado" hidden></p>
           </div>
           <p class="field__error" data-error-for="arquivo_documento_identidade"></p>
+        </div>
+
+        <div class="field">
+          <div class="g-recaptcha" data-sitekey="SUBSTITUA_PELA_SUA_SITE_KEY"></div>
+          <p class="field__error" data-error-for="recaptcha"></p>
         </div>
 
         <div class="card__footer">

@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     outlook_sender_email: str = ""
     outlook_token_cache_path: str = "/app/storage/outlook_token_cache.bin"
 
+    # reCAPTCHA (proteção contra envios automatizados/spam no formulário).
+    # Desligado por padrão -- útil pra rodar local sem precisar de chaves reais.
+    recaptcha_enabled: bool = False
+    recaptcha_secret_key: str = ""
+
     class Config:
         env_file = ".env"
         extra = "ignore"

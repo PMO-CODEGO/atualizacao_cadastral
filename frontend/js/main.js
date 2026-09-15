@@ -221,6 +221,13 @@ function validateForm() {
     }
   });
 
+  if (typeof grecaptcha !== 'undefined' && !grecaptcha.getResponse()) {
+    setError('recaptcha', 'Confirme que você não é um robô.');
+    valid = false;
+  } else {
+    clearError('recaptcha');
+  }
+
   return valid;
 }
 
@@ -271,6 +278,10 @@ form.addEventListener('submit', async (event) => {
   formData.append('representante_telefone', document.getElementById('representante_telefone').value);
   formData.append('representante_email', document.getElementById('representante_email').value.trim());
   formData.append('termo_empresa_aceito', document.getElementById('termo_empresa_aceito').checked);
+  formData.append(
+    'g_recaptcha_response',
+    typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse() : ''
+  );
   formData.append('termo_codego_aceito', document.getElementById('termo_codego_aceito').checked);
   ARQUIVOS.forEach((inputId) => {
     formData.append(inputId, document.getElementById(inputId).files[0]);
@@ -320,5 +331,8 @@ form.addEventListener('submit', async (event) => {
     );
   } finally {
     setLoading(false);
+    if (typeof grecaptcha !== 'undefined') {
+      grecaptcha.reset();
+    }
   }
 });

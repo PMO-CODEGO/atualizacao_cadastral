@@ -14,9 +14,10 @@ from app.schemas.atualizacao_cadastral import (
     validar_telefone,
 )
 from app.services.protocolo import gerar_protocolo
-from app.services.validacao_arquivos import validar_arquivo, extensao_de, salvar_arquivo, criar_zip_documentos
+from app.services.validacao_arquivos import validar_arquivo, extensao_de, salvar_arquivo
 from app.services.pdf_generator import gerar_pdf_formulario
 from app.services.email_service import enviar_email_atualizacao_cadastral
+from app.services.recaptcha import verificar_recaptcha
 
 router = APIRouter()
 
@@ -45,6 +46,7 @@ async def criar_atualizacao_cadastral(
     representante_email: str = Form(...),
     termo_empresa_aceito: bool = Form(...),
     termo_codego_aceito: bool = Form(...),
+    g_recaptcha_response: str = Form(default=""),
     arquivo_cnpj: UploadFile = File(...),
     arquivo_contrato_social: UploadFile = File(...),
     arquivo_certidao_matricula: UploadFile = File(...),
@@ -83,6 +85,10 @@ async def criar_atualizacao_cadastral(
             status_code=422,
             detail="É necessário aceitar os dois termos para enviar a atualização cadastral.",
         )
+
+    recaptcha_ok, recaptcha_erro = verificar_recaptcha(g_recaptcha_response)
+    if not recaptcha_ok:
+        raise HTTPException(status_code=422, detail=recaptcha_erro)
 
     arquivos_recebidos = {
         "arquivo_cnpj": arquivo_cnpj,
@@ -143,14 +149,11 @@ async def criar_atualizacao_cadastral(
             conteudos[campo], settings.upload_dir, f"{protocolo}_{sufixo}{ext}"
         )
 
-    # Compacta os 5 anexos + o PDF do formulário num único .zip para o e-mail
-    itens_para_zip = [(caminho_pdf_formulario, "Formulario_Atualizacao_Cadastral.pdf")]
-    for campo, _, nome_amigavel in CAMPOS_ARQUIVO:
-        ext = extensao_de(arquivos_recebidos[campo])
-        itens_para_zip.append((caminhos[campo], f"{nome_amigavel}{ext}"))
-    caminho_zip = criar_zip_documentos(
-        itens_para_zip, settings.upload_dir, f"{protocolo}_documentos.zip"
-    )
+    # Lista dos 6 arquivos (PDF do formulário + os 5 anexos) para enviar como
+    # anexos separados no e-mail -- sem compactar em .zip.
+    caminhos_para_email = [caminho_pdf_formulario] + [
+        caminhos[campo] for campo, _, _ in CAMPOS_ARQUIVO
+    ]
 
     # Grava no banco
     registro = AtualizacaoCadastral(
@@ -179,13 +182,14 @@ async def criar_atualizacao_cadastral(
     db.commit()
     db.refresh(registro)
 
-    # E-mail de confirmação (sempre para o e-mail fixo da empresa, com o .zip em anexo)
+    # E-mail de confirmação (sempre para o e-mail fixo da empresa, com os 6
+    # arquivos como anexos separados)
     destinatario = settings.notification_email or email_strip
     email_enviado, email_erro = enviar_email_atualizacao_cadastral(
         destinatario_email=destinatario,
         nome_empresarial=registro.nome_empresarial,
         protocolo=protocolo,
-        caminhos_anexos=[caminho_zip],
+        caminhos_anexos=caminhos_para_email,
     )
 
     registro.email_enviado = email_enviado

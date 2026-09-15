@@ -1,5 +1,4 @@
 import os
-import zipfile
 
 from fastapi import UploadFile, HTTPException
 
@@ -51,16 +50,3 @@ def salvar_arquivo(conteudo: bytes, diretorio: str, nome_arquivo: str) -> str:
     with open(caminho, "wb") as f:
         f.write(conteudo)
     return caminho
-
-
-def criar_zip_documentos(caminhos_com_nomes: list[tuple[str, str]], diretorio: str, nome_zip: str) -> str:
-    """
-    Compacta os arquivos em caminhos_com_nomes (lista de (caminho_no_disco,
-    nome_dentro_do_zip)) num único arquivo .zip, e retorna o caminho do zip.
-    """
-    os.makedirs(diretorio, exist_ok=True)
-    caminho_zip = os.path.join(diretorio, nome_zip)
-    with zipfile.ZipFile(caminho_zip, "w", zipfile.ZIP_DEFLATED) as zf:
-        for caminho_arquivo, nome_no_zip in caminhos_com_nomes:
-            zf.write(caminho_arquivo, arcname=nome_no_zip)
-    return caminho_zip

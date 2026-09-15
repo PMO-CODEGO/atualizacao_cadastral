@@ -17,7 +17,7 @@ def _montar_corpo_html(nome_empresarial: str, protocolo: str) -> str:
       <p>Olá,</p>
       <p>
         Confirmamos o recebimento da solicitação de atualização cadastral da empresa
-        <strong>{nome_empresarial}</strong>, com os documentos em anexo (compactados em um único arquivo .zip).
+        <strong>{nome_empresarial}</strong>, com os documentos em anexo.
       </p>
       <p style="font-family: monospace; background: #f2f2f2; padding: 8px 12px; display: inline-block;">
         Protocolo: <strong>{protocolo}</strong>

@@ -53,9 +53,16 @@ def enviar_email_atualizacao_cadastral_formsubmit(
         "_captcha": "false",
         "mensagem": (
             f"Confirmamos o recebimento da solicitação de atualização cadastral da "
-            f"empresa {nome_empresarial}, protocolo {protocolo}. Documentos em anexo "
-            f"(compactados em um único arquivo .zip)."
+            f"empresa {nome_empresarial}, protocolo {protocolo}. Documentos em anexo."
         ),
+    }
+
+    tipos_mime_por_extensao = {
+        ".pdf": "application/pdf",
+        ".doc": "application/msword",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".xls": "application/vnd.ms-excel",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }
 
     arquivos_para_upload = []
@@ -64,8 +71,10 @@ def enviar_email_atualizacao_cadastral_formsubmit(
         for caminho in caminhos_anexos:
             f = open(caminho, "rb")
             arquivos_abertos.append(f)
+            ext = os.path.splitext(caminho)[1].lower()
+            content_type = tipos_mime_por_extensao.get(ext, "application/octet-stream")
             arquivos_para_upload.append(
-                ("attachment", (os.path.basename(caminho), f, "application/zip"))
+                ("attachment", (os.path.basename(caminho), f, content_type))
             )
 
         resposta = requests.post(
