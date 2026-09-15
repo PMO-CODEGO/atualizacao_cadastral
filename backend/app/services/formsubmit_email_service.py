@@ -11,12 +11,20 @@ logger = logging.getLogger("codego.email")
 FORMSUBMIT_URL = "https://formsubmit.co/{email}"
 _MARCADOR_SUCESSO = "submitted successfully"
 
-# O FormSubmit rejeita requisições sem Referer/Origin de página web (proteção
-# anti-bot) — como este é um envio feito pelo backend, e não por um
-# navegador, simulamos esses cabeçalhos.
+# O FormSubmit (atrás do Cloudflare) rejeita requisições sem Referer/Origin
+# de página web e pode desafiar (403 "Just a moment...") requisições com
+# assinatura óbvia de script (sem User-Agent de navegador) — como este é um
+# envio feito pelo backend, e não por um navegador, simulamos esses
+# cabeçalhos.
 _HEADERS = {
     "Referer": "https://atualizacao-cadastral-0cay.onrender.com/",
     "Origin": "https://atualizacao-cadastral-0cay.onrender.com",
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
 }
 
 
