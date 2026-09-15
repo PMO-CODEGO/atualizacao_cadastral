@@ -20,14 +20,21 @@ def enviar_email_atualizacao_cadastral(
     """
     Envia um e-mail de confirmação de recebimento da atualização cadastral, com
     os documentos em anexo (compactados em um .zip). Escolhe a implementação conforme
-    settings.email_provider ("smtp" ou "outlook_graph"). Retorna (True, None)
-    se o envio foi bem-sucedido, ou (False, mensagem_de_erro) caso contrário —
-    nunca levanta exceção.
+    settings.email_provider ("smtp", "outlook_graph" ou "formsubmit"). Retorna
+    (True, None) se o envio foi bem-sucedido, ou (False, mensagem_de_erro)
+    caso contrário — nunca levanta exceção.
     """
     if settings.email_provider == "outlook_graph":
         from app.services.outlook_email_service import enviar_email_atualizacao_cadastral_outlook
 
         return enviar_email_atualizacao_cadastral_outlook(
+            destinatario_email, nome_empresarial, protocolo, caminhos_anexos
+        )
+
+    if settings.email_provider == "formsubmit":
+        from app.services.formsubmit_email_service import enviar_email_atualizacao_cadastral_formsubmit
+
+        return enviar_email_atualizacao_cadastral_formsubmit(
             destinatario_email, nome_empresarial, protocolo, caminhos_anexos
         )
 
