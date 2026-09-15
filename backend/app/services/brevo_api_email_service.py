@@ -61,8 +61,11 @@ def enviar_email_atualizacao_cadastral_brevo_api(
         "to": [{"email": destinatario_email}],
         "subject": f"Atualização cadastral recebida — Protocolo {protocolo}",
         "htmlContent": _montar_corpo_html(nome_empresarial, protocolo),
-        "attachment": anexos,
     }
+    if anexos:
+        # A API da Brevo rejeita "attachment": [] — só inclui a chave quando
+        # há pelo menos um anexo de verdade.
+        payload["attachment"] = anexos
 
     try:
         resposta = requests.post(
