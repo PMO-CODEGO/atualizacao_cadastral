@@ -51,6 +51,10 @@ function maskTelefone(digits) {
     .replace(/(\d{5})(\d{1,4})$/, '$1-$2');
 }
 
+function maskCep(digits) {
+  return digits.slice(0, 8).replace(/(\d{5})(\d{1,3})$/, '$1-$2');
+}
+
 document.getElementById('cnpj').addEventListener('input', (e) => {
   e.target.value = maskCnpj(onlyDigits(e.target.value));
 });
@@ -62,6 +66,9 @@ document.getElementById('telefone').addEventListener('input', (e) => {
 });
 document.getElementById('representante_telefone').addEventListener('input', (e) => {
   e.target.value = maskTelefone(onlyDigits(e.target.value));
+});
+document.getElementById('endereco_cep').addEventListener('input', (e) => {
+  e.target.value = maskCep(onlyDigits(e.target.value));
 });
 
 function setupFilePreview(inputId) {
@@ -134,7 +141,10 @@ function validarArquivo(inputId) {
 
 const CAMPOS_TEXTO_OBRIGATORIOS = [
   ['nome_empresarial', 'Informe o nome da empresa.'],
-  ['endereco', 'Informe o endereço completo.'],
+  ['endereco_distrito', 'Informe o distrito.'],
+  ['endereco_logradouro', 'Informe o logradouro.'],
+  ['endereco_quadra', 'Informe a quadra.'],
+  ['endereco_lote_modulo', 'Informe o lote/módulo.'],
   ['ramo_atividade', 'Informe o ramo de atividade.'],
   ['previsao_geracao_empregos', 'Informe a previsão de geração de empregos.'],
   ['representante_nome', 'Informe o nome do representante ou procurador.'],
@@ -159,6 +169,14 @@ function validateForm() {
     valid = false;
   } else {
     clearError('cnpj');
+  }
+
+  const cepDigits = onlyDigits(document.getElementById('endereco_cep').value);
+  if (cepDigits.length !== 8) {
+    setError('endereco_cep', 'CEP deve ter 8 dígitos.');
+    valid = false;
+  } else {
+    clearError('endereco_cep');
   }
 
   const emailValue = document.getElementById('email').value.trim();
@@ -265,10 +283,17 @@ form.addEventListener('submit', async (event) => {
     return;
   }
 
+  const distrito = document.getElementById('endereco_distrito').value.trim();
+  const logradouro = document.getElementById('endereco_logradouro').value.trim();
+  const quadra = document.getElementById('endereco_quadra').value.trim();
+  const loteModulo = document.getElementById('endereco_lote_modulo').value.trim();
+  const cep = document.getElementById('endereco_cep').value.trim();
+  const enderecoCompleto = `Distrito ${distrito}, ${logradouro}, Quadra ${quadra}, Lote/Módulo ${loteModulo}, CEP ${cep}`;
+
   const formData = new FormData();
   formData.append('nome_empresarial', document.getElementById('nome_empresarial').value.trim());
   formData.append('cnpj', document.getElementById('cnpj').value);
-  formData.append('endereco', document.getElementById('endereco').value.trim());
+  formData.append('endereco', enderecoCompleto);
   formData.append('email', document.getElementById('email').value.trim());
   formData.append('telefone', document.getElementById('telefone').value);
   formData.append('ramo_atividade', document.getElementById('ramo_atividade').value.trim());

@@ -37,6 +37,7 @@
           <p class="termo-block__texto">Esta empresa se compromete a repassar todas as informações com veracidade e fidelidade aos dados, podendo ser responsabilizada extrajudicial ou judicialmente em caso de omissão de informações ou repasse de informações incorretas. Em caso de dúvidas sobre o preenchimento, as empresas deverão entrar em contato através dos canais de comunicação que seguem abaixo:
 
 Telefone: (62) 3604-3100
+WhatsApp: (62) 99605-5457
 E-mail: atualizacaocadastral@codego.com.br</p>
           <label class="termo-block__aceite">
             <input type="checkbox" id="termo_empresa_aceito" name="termo_empresa_aceito" required>
@@ -91,10 +92,38 @@ Responsabilidade pela Segurança dos Dados: A CODEGO se responsabiliza por mante
           <p class="field__error" data-error-for="arquivo_contrato_social"></p>
         </div>
 
+        <div class="field-row">
+          <div class="field">
+            <label for="endereco_distrito">Distrito</label>
+            <input type="text" id="endereco_distrito" name="endereco_distrito" placeholder="Ex.: Distrito X" required>
+            <p class="field__error" data-error-for="endereco_distrito"></p>
+          </div>
+
+          <div class="field">
+            <label for="endereco_cep">CEP</label>
+            <input type="text" id="endereco_cep" name="endereco_cep" inputmode="numeric" placeholder="00000-000" required>
+            <p class="field__error" data-error-for="endereco_cep"></p>
+          </div>
+        </div>
+
         <div class="field">
-          <label for="endereco">Endereço (Distrito / Logradouro / Quadra / Módulo / CEP)</label>
-          <input type="text" id="endereco" name="endereco" placeholder="Ex.: Distrito X, Rua Y, Quadra Z, Módulo W, CEP 00000-000" required>
-          <p class="field__error" data-error-for="endereco"></p>
+          <label for="endereco_logradouro">Logradouro</label>
+          <input type="text" id="endereco_logradouro" name="endereco_logradouro" placeholder="Ex.: Rua Y" required>
+          <p class="field__error" data-error-for="endereco_logradouro"></p>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="endereco_quadra">Quadra</label>
+            <input type="text" id="endereco_quadra" name="endereco_quadra" placeholder="Ex.: Quadra Z" required>
+            <p class="field__error" data-error-for="endereco_quadra"></p>
+          </div>
+
+          <div class="field">
+            <label for="endereco_lote_modulo">Lote / Módulo</label>
+            <input type="text" id="endereco_lote_modulo" name="endereco_lote_modulo" placeholder="Ex.: Módulo W" required>
+            <p class="field__error" data-error-for="endereco_lote_modulo"></p>
+          </div>
         </div>
 
         <div class="field-row">
