@@ -12,6 +12,7 @@ from app.schemas.atualizacao_cadastral import (
     validar_cnpj,
     validar_cpf,
     validar_telefone,
+    validar_texto_seguro,
 )
 from app.services.protocolo import gerar_protocolo
 from app.services.validacao_arquivos import validar_arquivo, extensao_de, salvar_arquivo
@@ -77,6 +78,14 @@ async def criar_atualizacao_cadastral(
         representante_cpf_digits = validar_cpf(representante_cpf)
         telefone_digits = validar_telefone(telefone)
         representante_telefone_digits = validar_telefone(representante_telefone)
+
+        nome_empresarial = validar_texto_seguro(nome_empresarial, "Nome Empresarial")
+        endereco = validar_texto_seguro(endereco, "Endereço")
+        ramo_atividade = validar_texto_seguro(ramo_atividade, "Ramo de Atividade")
+        previsao_geracao_empregos = validar_texto_seguro(
+            previsao_geracao_empregos, "Previsão de geração de empregos"
+        )
+        representante_nome = validar_texto_seguro(representante_nome, "Nome do representante")
     except ValueError as erro:
         raise HTTPException(status_code=422, detail=str(erro))
 

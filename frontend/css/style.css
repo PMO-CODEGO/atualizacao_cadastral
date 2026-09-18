@@ -344,6 +344,16 @@ input:focus-visible {
   color: var(--ink-soft);
 }
 
+.field__hint--ok {
+  color: var(--primary-dark);
+  font-style: normal;
+}
+
+.field__hint--warn {
+  color: var(--gold-dark);
+  font-style: normal;
+}
+
 .field__with-toggle {
   display: flex;
   gap: 10px;
