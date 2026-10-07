@@ -1,6 +1,7 @@
 from datetime import datetime
 import re
 
+from email_validator import EmailNotValidError, validate_email
 from pydantic import BaseModel, ConfigDict
 
 
@@ -55,6 +56,21 @@ def validar_telefone(v: str) -> str:
     return digits
 
 
+def validar_email(v: str, nome_campo: str = "E-mail") -> str:
+    """
+    Garante que o valor é um e-mail de verdade (formato válido, sem espaços,
+    HTML ou quebras de linha). Retorna o e-mail normalizado. Não consulta DNS
+    (check_deliverability=False) para não atrasar nem falhar o envio.
+    """
+    valor = (v or "").strip()
+    if len(valor) > 254:
+        raise ValueError(f"{nome_campo} muito longo.")
+    try:
+        return validate_email(valor, check_deliverability=False).normalized
+    except EmailNotValidError:
+        raise ValueError(f"{nome_campo} inválido. Informe um endereço como nome@empresa.com.br.")
+
+
 # Letras (com acentos), números, espaço, e pontuação comum de nomes/endereços/
 # descrições (vírgula, ponto, hífen, barra, "&", parênteses, apóstrofo).
 _PADRAO_TEXTO_SEGURO = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ0-9\s.,\-/&()'ºª]+$")
@@ -70,7 +86,9 @@ def validar_texto_seguro(v: str, nome_campo: str, tamanho_max_palavra: int = 40)
     que não tenha uma sequência gigante sem espaços (o que quebraria o layout
     do PDF gerado). Usado nos campos de texto livre do formulário.
     """
-    valor = v.strip()
+    # Quebras de linha e tabs viram um espaço só (o padrão aceita "\s", que
+    # inclui \n e \r; isso evita linhas "fantasma" no PDF e no e-mail).
+    valor = " ".join(v.split())
 
     caracteres_invalidos = sorted(set(_CARACTERES_PROIBIDOS.findall(valor)))
     if caracteres_invalidos:

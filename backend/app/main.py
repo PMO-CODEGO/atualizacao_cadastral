@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import settings
 from app.database import Base, engine, wait_for_db
 from app.routers import cadastro
 
@@ -18,12 +19,18 @@ app = FastAPI(
     title="Sistema de Atualização Cadastral CODEGO",
     description="API para recebimento de solicitações de atualização cadastral (dados + CNPJ + Contrato Social).",
     version="0.1.0",
+    # Documentação interativa (/docs, /redoc, /openapi.json) só em
+    # desenvolvimento: em produção ela entregaria um mapa completo da API.
+    docs_url="/docs" if settings.app_env == "development" else None,
+    redoc_url="/redoc" if settings.app_env == "development" else None,
+    openapi_url="/openapi.json" if settings.app_env == "development" else None,
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    # O site não usa cookies/credenciais; com "*" não faz sentido permitir.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

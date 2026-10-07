@@ -15,7 +15,11 @@ class Settings(BaseSettings):
     # acima (usadas no Docker local). Não precisa mexer nisso pra rodar local.
     raw_database_url: str = Field(default="", validation_alias="DATABASE_URL")
 
-    app_env: str = "development"
+    # Padrão "production" (seguro): só quem define APP_ENV=development no .env
+    # local ganha a documentação /docs. Se o Render esquecer a variável, a API
+    # continua fechada.
+    app_env: str = "production"
+    # Também assina os links de download do PDF -- use um valor longo e secreto.
     app_secret_key: str = "change_me_secret"
 
     upload_dir: str = "/app/storage/uploads"

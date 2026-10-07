@@ -2,13 +2,29 @@ import base64
 import os
 from datetime import datetime
 
-from jinja2 import Environment, FileSystemLoader
-from weasyprint import HTML
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from weasyprint import HTML, default_url_fetcher
 
 from app.config import settings
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "..", "templates")
-_env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
+# autoescape ligado: qualquer "<", ">" ou aspas digitadas no formulário viram
+# texto comum no PDF, nunca HTML.
+_env = Environment(
+    loader=FileSystemLoader(TEMPLATES_DIR),
+    autoescape=select_autoescape(["html", "xml"]),
+)
+
+
+def _url_fetcher_seguro(url, *args, **kwargs):
+    """
+    O PDF só precisa de imagens embutidas (data:). Qualquer outro recurso
+    (file://, http://, https://) é bloqueado, para o WeasyPrint nunca ler
+    arquivos do servidor nem acessar a rede por causa de conteúdo do formulário.
+    """
+    if url.startswith("data:"):
+        return default_url_fetcher(url, *args, **kwargs)
+    raise ValueError(f"Recurso externo bloqueado na geração do PDF: {url[:80]}")
 
 
 def _carregar_brasao_base64() -> str:
@@ -83,6 +99,6 @@ def gerar_pdf_formulario(
     nome_arquivo = f"{protocolo}_formulario_atualizacao_cadastral.pdf"
     caminho_completo = os.path.join(settings.upload_dir, nome_arquivo)
 
-    HTML(string=html_renderizado).write_pdf(caminho_completo)
+    HTML(string=html_renderizado, url_fetcher=_url_fetcher_seguro).write_pdf(caminho_completo)
 
     return caminho_completo

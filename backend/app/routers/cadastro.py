@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
@@ -11,9 +11,11 @@ from app.schemas.atualizacao_cadastral import (
     AtualizacaoCadastralResponse,
     validar_cnpj,
     validar_cpf,
+    validar_email,
     validar_telefone,
     validar_texto_seguro,
 )
+from app.services.seguranca import gerar_token_download, token_download_valido
 from app.services.protocolo import gerar_protocolo
 from app.services.validacao_arquivos import validar_arquivo, extensao_de, salvar_arquivo
 from app.services.pdf_generator import gerar_pdf_formulario
@@ -78,6 +80,10 @@ async def criar_atualizacao_cadastral(
         representante_cpf_digits = validar_cpf(representante_cpf)
         telefone_digits = validar_telefone(telefone)
         representante_telefone_digits = validar_telefone(representante_telefone)
+        # E-mails com formato válido (também impede HTML/código no campo, que
+        # iria parar dentro do PDF e do e-mail enviados).
+        email = validar_email(email, "E-mail da empresa")
+        representante_email = validar_email(representante_email, "E-mail do representante")
 
         nome_empresarial = validar_texto_seguro(nome_empresarial, "Nome Empresarial")
         endereco = validar_texto_seguro(endereco, "Endereço")
@@ -210,23 +216,31 @@ async def criar_atualizacao_cadastral(
         email_enviado=email_enviado,
         email_destinatario=destinatario,
         email_erro=email_erro,
-        pdf_download_url=f"/api/atualizacao-cadastral/{protocolo}/pdf",
+        # Link assinado: sem o token (que só quem enviou o formulário recebe)
+        # não dá para baixar o PDF só adivinhando o protocolo.
+        pdf_download_url=(
+            f"/api/atualizacao-cadastral/{protocolo}/pdf?token={gerar_token_download(protocolo)}"
+        ),
     )
 
 
-@router.get("/{protocolo}")
-def consultar_por_protocolo(protocolo: str, db: Session = Depends(get_db)):
-    registro = (
-        db.query(AtualizacaoCadastral).filter(AtualizacaoCadastral.protocolo == protocolo).first()
-    )
-    if registro is None:
-        raise HTTPException(status_code=404, detail="Protocolo não encontrado.")
-    return registro
+# A consulta pública por protocolo (GET /{protocolo}) foi removida de propósito:
+# devolvia todos os dados cadastrais (CNPJ, CPF, telefones, e-mails) para
+# qualquer pessoa que adivinhasse um protocolo.
 
 
 @router.get("/{protocolo}/pdf")
-def baixar_pdf_formulario(protocolo: str, db: Session = Depends(get_db)):
-    """Disponibiliza o PDF timbrado do formulário preenchido para download."""
+def baixar_pdf_formulario(
+    protocolo: str,
+    token: str = Query(default=""),
+    db: Session = Depends(get_db),
+):
+    """Disponibiliza o PDF timbrado do formulário preenchido para download (só com o link assinado)."""
+    # Mesma resposta para "token errado" e "protocolo inexistente", para não
+    # revelar quais protocolos existem.
+    if not token_download_valido(protocolo, token):
+        raise HTTPException(status_code=404, detail="PDF não encontrado para este protocolo.")
+
     registro = (
         db.query(AtualizacaoCadastral).filter(AtualizacaoCadastral.protocolo == protocolo).first()
     )
