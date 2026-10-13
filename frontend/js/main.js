@@ -114,18 +114,68 @@ cepInput.addEventListener('blur', async () => {
   }
 });
 
+// Cada campo aceita vários arquivos. O <input type="file"> só guarda a última
+// seleção, então a lista de arquivos de cada campo fica aqui e vai crescendo a
+// cada "Escolher arquivos" (dá para juntar arquivos de pastas diferentes).
+const MAX_ARQUIVOS_POR_CAMPO = 5;
+const arquivosPorCampo = {};
+ARQUIVOS.forEach((id) => { arquivosPorCampo[id] = []; });
+
+function formatarTamanho(bytes) {
+  return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+}
+
+function renderizarListaArquivos(inputId) {
+  const listaEl = document.getElementById(`${inputId}-selecionado`);
+  const arquivos = arquivosPorCampo[inputId];
+  listaEl.innerHTML = '';
+  if (!arquivos.length) {
+    listaEl.hidden = true;
+    return;
+  }
+  arquivos.forEach((file, indice) => {
+    const item = document.createElement('li');
+    const nome = document.createElement('span');
+    nome.textContent = `${file.name} (${formatarTamanho(file.size)})`;
+    const remover = document.createElement('button');
+    remover.type = 'button';
+    remover.className = 'file-list__remove';
+    remover.textContent = 'Remover';
+    remover.setAttribute('aria-label', `Remover ${file.name}`);
+    remover.addEventListener('click', () => {
+      arquivosPorCampo[inputId].splice(indice, 1);
+      renderizarListaArquivos(inputId);
+    });
+    item.append(nome, remover);
+    listaEl.appendChild(item);
+  });
+  listaEl.hidden = false;
+}
+
 function setupFilePreview(inputId) {
   const input = document.getElementById(inputId);
-  const selecionadoEl = document.getElementById(`${inputId}-selecionado`);
   input.addEventListener('change', () => {
-    const file = input.files[0];
-    if (!file) {
-      selecionadoEl.hidden = true;
-      return;
+    const novos = Array.from(input.files);
+    // Limpa o input para o mesmo arquivo poder ser escolhido de novo depois.
+    input.value = '';
+    let excedeuLimite = false;
+    novos.forEach((file) => {
+      const jaExiste = arquivosPorCampo[inputId].some(
+        (f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified
+      );
+      if (jaExiste) return;
+      if (arquivosPorCampo[inputId].length >= MAX_ARQUIVOS_POR_CAMPO) {
+        excedeuLimite = true;
+        return;
+      }
+      arquivosPorCampo[inputId].push(file);
+    });
+    renderizarListaArquivos(inputId);
+    if (excedeuLimite) {
+      setError(inputId, `Limite de ${MAX_ARQUIVOS_POR_CAMPO} arquivos neste campo. Remova algum para adicionar outro.`);
+    } else {
+      clearError(inputId);
     }
-    selecionadoEl.textContent = `Selecionado: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`;
-    selecionadoEl.hidden = false;
-    clearError(inputId);
   });
 }
 ARQUIVOS.forEach(setupFilePreview);
@@ -161,22 +211,23 @@ const MIME_PERMITIDOS = [
 ];
 
 function validarArquivo(inputId) {
-  const input = document.getElementById(inputId);
-  const file = input.files[0];
-  if (!file) {
-    setError(inputId, 'Selecione o arquivo (PDF, Word ou Excel).');
+  const arquivos = arquivosPorCampo[inputId];
+  if (!arquivos.length) {
+    setError(inputId, 'Selecione pelo menos um arquivo (PDF, Word ou Excel).');
     return false;
   }
-  const nomeArquivo = file.name.toLowerCase();
-  const extensaoValida = EXTENSOES_PERMITIDAS.some((ext) => nomeArquivo.endsWith(ext));
-  const mimeValido = MIME_PERMITIDOS.includes(file.type) || file.type === '';
-  if (!extensaoValida || !mimeValido) {
-    setError(inputId, 'O arquivo deve ser PDF, Word (.doc/.docx) ou Excel (.xls/.xlsx).');
-    return false;
-  }
-  if (file.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
-    setError(inputId, `O arquivo excede o limite de ${MAX_UPLOAD_SIZE_MB}MB.`);
-    return false;
+  for (const file of arquivos) {
+    const nomeArquivo = file.name.toLowerCase();
+    const extensaoValida = EXTENSOES_PERMITIDAS.some((ext) => nomeArquivo.endsWith(ext));
+    const mimeValido = MIME_PERMITIDOS.includes(file.type) || file.type === '';
+    if (!extensaoValida || !mimeValido) {
+      setError(inputId, `"${file.name}" não é válido. Use PDF, Word (.doc/.docx) ou Excel (.xls/.xlsx).`);
+      return false;
+    }
+    if (file.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024) {
+      setError(inputId, `"${file.name}" excede o limite de ${MAX_UPLOAD_SIZE_MB}MB.`);
+      return false;
+    }
   }
   clearError(inputId);
   return true;
@@ -353,8 +404,9 @@ form.addEventListener('submit', async (event) => {
     typeof grecaptcha !== 'undefined' ? grecaptcha.getResponse() : ''
   );
   formData.append('termo_codego_aceito', document.getElementById('termo_codego_aceito').checked);
+  // Mesmo nome de campo repetido: o servidor recebe a lista de arquivos.
   ARQUIVOS.forEach((inputId) => {
-    formData.append(inputId, document.getElementById(inputId).files[0]);
+    arquivosPorCampo[inputId].forEach((file) => formData.append(inputId, file));
   });
 
   setLoading(true);
@@ -393,7 +445,10 @@ form.addEventListener('submit', async (event) => {
     );
 
     form.reset();
-    document.querySelectorAll('.file-drop__selected').forEach((el) => (el.hidden = true));
+    ARQUIVOS.forEach((inputId) => {
+      arquivosPorCampo[inputId] = [];
+      renderizarListaArquivos(inputId);
+    });
   } catch (error) {
     showFeedback(
       `<p class="feedback__title">Falha de conexão</p><p>Não foi possível falar com o servidor. Verifique se a API está em execução e tente novamente.</p>`,

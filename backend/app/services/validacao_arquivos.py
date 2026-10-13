@@ -20,6 +20,13 @@ TIPOS_PERMITIDOS = {
     },
 }
 
+# Máximo de arquivos por campo do formulário.
+MAX_ARQUIVOS_POR_CAMPO = 5
+
+# Nas colunas caminho_pdf_* (uma por campo) os caminhos de vários arquivos ficam
+# separados por este caractere. 5 caminhos cabem folgados nos 500 caracteres.
+SEPARADOR_CAMINHOS = "|"
+
 EXTENSOES_DESCRICAO = "PDF, Word (.doc/.docx) ou Excel (.xls/.xlsx)"
 
 

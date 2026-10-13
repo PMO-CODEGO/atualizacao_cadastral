@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from fastapi.responses import FileResponse
@@ -17,7 +18,13 @@ from app.schemas.atualizacao_cadastral import (
 )
 from app.services.seguranca import gerar_token_download, token_download_valido
 from app.services.protocolo import gerar_protocolo
-from app.services.validacao_arquivos import validar_arquivo, extensao_de, salvar_arquivo
+from app.services.validacao_arquivos import (
+    MAX_ARQUIVOS_POR_CAMPO,
+    SEPARADOR_CAMINHOS,
+    validar_arquivo,
+    extensao_de,
+    salvar_arquivo,
+)
 from app.services.pdf_generator import gerar_pdf_formulario
 from app.services.email_service import enviar_email_atualizacao_cadastral
 from app.services.recaptcha import verificar_recaptcha
@@ -28,7 +35,7 @@ router = APIRouter()
 CAMPOS_ARQUIVO = [
     ("arquivo_cnpj", "cnpj", "Comprovante_CNPJ"),
     ("arquivo_contrato_social", "contrato_social", "Contrato_Social"),
-    ("arquivo_certidao_matricula", "certidao_matricula", "Certidao_Matricula_Imovel"),
+    ("arquivo_certidao_matricula", "certidao_matricula", "Certidao_Matricula_Escritura_Contrato"),
     ("arquivo_contrato_ou_procuracao", "contrato_ou_procuracao", "Contrato_Social_ou_Procuracao"),
     ("arquivo_documento_identidade", "documento_identidade", "Documento_Identidade"),
 ]
@@ -50,15 +57,16 @@ async def criar_atualizacao_cadastral(
     termo_empresa_aceito: bool = Form(...),
     termo_codego_aceito: bool = Form(...),
     g_recaptcha_response: str = Form(default=""),
-    arquivo_cnpj: UploadFile = File(...),
-    arquivo_contrato_social: UploadFile = File(...),
-    arquivo_certidao_matricula: UploadFile = File(...),
-    arquivo_contrato_ou_procuracao: UploadFile = File(...),
-    arquivo_documento_identidade: UploadFile = File(...),
+    arquivo_cnpj: List[UploadFile] = File(...),
+    arquivo_contrato_social: List[UploadFile] = File(...),
+    arquivo_certidao_matricula: List[UploadFile] = File(...),
+    arquivo_contrato_ou_procuracao: List[UploadFile] = File(...),
+    arquivo_documento_identidade: List[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ):
     """
-    Recebe a solicitação de atualização cadastral (dados + 5 arquivos), valida
+    Recebe a solicitação de atualização cadastral (dados + documentos; cada
+    campo aceita mais de um arquivo), valida
     tudo, gera um protocolo único, gera o PDF timbrado do formulário
     preenchido, salva os arquivos, compacta tudo (os 5 anexos + o PDF do
     formulário) num único .zip, grava no banco e envia o e-mail de
@@ -115,16 +123,31 @@ async def criar_atualizacao_cadastral(
     nomes_amigaveis = {
         "arquivo_cnpj": "Comprovante de Inscrição CNPJ",
         "arquivo_contrato_social": "Cópia do Contrato Social",
-        "arquivo_certidao_matricula": "Certidão de Matrícula do Imóvel",
+        "arquivo_certidao_matricula": "Certidão de Matrícula ou Escritura ou Contrato de Compra e Venda ou Escritura Pública",
         "arquivo_contrato_ou_procuracao": "Contrato Social ou Procuração",
         "arquivo_documento_identidade": "Documento de Identidade",
     }
 
+    # Cada campo recebe uma lista de arquivos: valida todos antes de salvar.
     conteudos = {}
-    for campo, arquivo in arquivos_recebidos.items():
-        conteudo = await arquivo.read()
-        validar_arquivo(arquivo, conteudo, nomes_amigaveis[campo])
-        conteudos[campo] = conteudo
+    for campo, lista in arquivos_recebidos.items():
+        if not lista:
+            raise HTTPException(
+                status_code=422, detail=f"Envie pelo menos um arquivo em '{nomes_amigaveis[campo]}'."
+            )
+        if len(lista) > MAX_ARQUIVOS_POR_CAMPO:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"No campo '{nomes_amigaveis[campo]}' envie no máximo "
+                    f"{MAX_ARQUIVOS_POR_CAMPO} arquivos."
+                ),
+            )
+        conteudos[campo] = []
+        for arquivo in lista:
+            conteudo = await arquivo.read()
+            validar_arquivo(arquivo, conteudo, nomes_amigaveis[campo])
+            conteudos[campo].append(conteudo)
 
     # Protocolo único
     protocolo = gerar_protocolo()
@@ -155,19 +178,25 @@ async def criar_atualizacao_cadastral(
         representante_email=representante_email_strip,
     )
 
-    # Salva cada arquivo enviado com a extensão original (pdf/doc/docx/xls/xlsx)
-    caminhos = {}
+    # Salva cada arquivo enviado com a extensão original (pdf/doc/docx/xls/xlsx).
+    # Com mais de um arquivo no campo, o nome ganha um número (_1, _2, ...).
+    caminhos = {}  # campo -> lista de caminhos
     for campo, sufixo, _ in CAMPOS_ARQUIVO:
-        arquivo = arquivos_recebidos[campo]
-        ext = extensao_de(arquivo)
-        caminhos[campo] = salvar_arquivo(
-            conteudos[campo], settings.upload_dir, f"{protocolo}_{sufixo}{ext}"
-        )
+        lista = arquivos_recebidos[campo]
+        caminhos[campo] = []
+        for indice, arquivo in enumerate(lista, start=1):
+            ext = extensao_de(arquivo)
+            numero = f"_{indice}" if len(lista) > 1 else ""
+            caminhos[campo].append(
+                salvar_arquivo(
+                    conteudos[campo][indice - 1], settings.upload_dir, f"{protocolo}_{sufixo}{numero}{ext}"
+                )
+            )
 
-    # Lista dos 6 arquivos (PDF do formulário + os 5 anexos) para enviar como
-    # anexos separados no e-mail -- sem compactar em .zip.
+    # Lista de todos os arquivos (PDF do formulário + todos os anexos) para
+    # enviar como anexos separados no e-mail -- sem compactar em .zip.
     caminhos_para_email = [caminho_pdf_formulario] + [
-        caminhos[campo] for campo, _, _ in CAMPOS_ARQUIVO
+        caminho for campo, _, _ in CAMPOS_ARQUIVO for caminho in caminhos[campo]
     ]
 
     # Grava no banco
@@ -187,17 +216,17 @@ async def criar_atualizacao_cadastral(
         termo_empresa_aceito=termo_empresa_aceito,
         termo_codego_aceito=termo_codego_aceito,
         caminho_pdf_formulario=caminho_pdf_formulario,
-        caminho_pdf_cnpj=caminhos["arquivo_cnpj"],
-        caminho_pdf_contrato_social=caminhos["arquivo_contrato_social"],
-        caminho_pdf_certidao_matricula=caminhos["arquivo_certidao_matricula"],
-        caminho_pdf_contrato_ou_procuracao=caminhos["arquivo_contrato_ou_procuracao"],
-        caminho_pdf_documento_identidade=caminhos["arquivo_documento_identidade"],
+        caminho_pdf_cnpj=SEPARADOR_CAMINHOS.join(caminhos["arquivo_cnpj"]),
+        caminho_pdf_contrato_social=SEPARADOR_CAMINHOS.join(caminhos["arquivo_contrato_social"]),
+        caminho_pdf_certidao_matricula=SEPARADOR_CAMINHOS.join(caminhos["arquivo_certidao_matricula"]),
+        caminho_pdf_contrato_ou_procuracao=SEPARADOR_CAMINHOS.join(caminhos["arquivo_contrato_ou_procuracao"]),
+        caminho_pdf_documento_identidade=SEPARADOR_CAMINHOS.join(caminhos["arquivo_documento_identidade"]),
     )
     db.add(registro)
     db.commit()
     db.refresh(registro)
 
-    # E-mail de confirmação (sempre para o e-mail fixo da empresa, com os 6
+    # E-mail de confirmação (sempre para o e-mail fixo da empresa, com todos os
     # arquivos como anexos separados)
     destinatario = settings.notification_email or email_strip
     email_enviado, email_erro = enviar_email_atualizacao_cadastral(
