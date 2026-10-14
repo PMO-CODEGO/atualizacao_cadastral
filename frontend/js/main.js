@@ -1,6 +1,6 @@
 // Local (Docker) usa localhost:8001. Publicado (Netlify), aponta pro back-end
 // real no Render.
-const RENDER_API_URL = 'https://atualizacao-cadastral-0cay.onrender.com';
+const RENDER_API_URL = 'https://atualizacao-cadastral-34di.onrender.com';
 
 const EH_AMBIENTE_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const API_BASE_URL = window.CODEGO_API_BASE_URL || (EH_AMBIENTE_LOCAL ? 'http://localhost:8001' : RENDER_API_URL);
