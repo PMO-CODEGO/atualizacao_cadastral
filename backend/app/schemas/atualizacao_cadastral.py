@@ -80,15 +80,25 @@ _PADRAO_TEXTO_SEGURO = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ0-9\s.,\-/&()'ºª]+$
 _CARACTERES_PROIBIDOS = re.compile(r"[^A-Za-zÀ-ÖØ-öø-ÿ0-9\s.,\-/&()'ºª]")
 
 
-def validar_texto_seguro(v: str, nome_campo: str, tamanho_max_palavra: int = 40) -> str:
+def validar_texto_seguro(
+    v: str, nome_campo: str, tamanho_max_palavra: int = 40, tamanho_max: int = 255
+) -> str:
     """
-    Garante que o campo não contenha caracteres especiais (@, #, $, %, etc.) e
+    Garante que o campo não contenha caracteres especiais (@, #, $, %, etc.),
     que não tenha uma sequência gigante sem espaços (o que quebraria o layout
-    do PDF gerado). Usado nos campos de texto livre do formulário.
+    do PDF gerado) e que caiba na coluna do banco (tamanho_max, que deve ser
+    igual ao String(N) do modelo; sem isso o Postgres recusa o INSERT e a API
+    responde 500). Usado nos campos de texto livre do formulário.
     """
     # Quebras de linha e tabs viram um espaço só (o padrão aceita "\s", que
     # inclui \n e \r; isso evita linhas "fantasma" no PDF e no e-mail).
     valor = " ".join(v.split())
+
+    if len(valor) > tamanho_max:
+        raise ValueError(
+            f"O campo '{nome_campo}' aceita no máximo {tamanho_max} caracteres "
+            f"(você digitou {len(valor)}). Resuma o texto e tente novamente."
+        )
 
     caracteres_invalidos = sorted(set(_CARACTERES_PROIBIDOS.findall(valor)))
     if caracteres_invalidos:

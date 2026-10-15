@@ -93,13 +93,16 @@ async def criar_atualizacao_cadastral(
         email = validar_email(email, "E-mail da empresa")
         representante_email = validar_email(representante_email, "E-mail do representante")
 
-        nome_empresarial = validar_texto_seguro(nome_empresarial, "Nome Empresarial")
-        endereco = validar_texto_seguro(endereco, "Endereço")
-        ramo_atividade = validar_texto_seguro(ramo_atividade, "Ramo de Atividade")
+        # Os limites de tamanho espelham as colunas String(N) de models/orm.py.
+        nome_empresarial = validar_texto_seguro(nome_empresarial, "Nome Empresarial", tamanho_max=255)
+        endereco = validar_texto_seguro(endereco, "Endereço", tamanho_max=500)
+        ramo_atividade = validar_texto_seguro(ramo_atividade, "Ramo de Atividade", tamanho_max=255)
         previsao_geracao_empregos = validar_texto_seguro(
-            previsao_geracao_empregos, "Previsão de geração de empregos"
+            previsao_geracao_empregos, "Previsão de geração de empregos", tamanho_max=255
         )
-        representante_nome = validar_texto_seguro(representante_nome, "Nome do representante")
+        representante_nome = validar_texto_seguro(
+            representante_nome, "Nome do representante", tamanho_max=255
+        )
     except ValueError as erro:
         raise HTTPException(status_code=422, detail=str(erro))
 
@@ -129,6 +132,11 @@ async def criar_atualizacao_cadastral(
     }
 
     # Cada campo recebe uma lista de arquivos: valida todos antes de salvar.
+    # Os anexos seguem juntos num único e-mail, e o provedor recusa mensagens
+    # acima de 20MB (o base64 aumenta o tamanho em ~33%), então o total dos
+    # anexos também tem limite -- além do limite por arquivo.
+    limite_total = settings.max_total_upload_size_mb * 1024 * 1024
+    total_bytes = 0
     conteudos = {}
     for campo, lista in arquivos_recebidos.items():
         if not lista:
@@ -147,6 +155,16 @@ async def criar_atualizacao_cadastral(
         for arquivo in lista:
             conteudo = await arquivo.read()
             validar_arquivo(arquivo, conteudo, nomes_amigaveis[campo])
+            total_bytes += len(conteudo)
+            if total_bytes > limite_total:
+                raise HTTPException(
+                    status_code=413,
+                    detail=(
+                        f"O total dos anexos excede o limite de "
+                        f"{settings.max_total_upload_size_mb}MB. Reduza o tamanho ou a "
+                        f"quantidade de arquivos e tente novamente."
+                    ),
+                )
             conteudos[campo].append(conteudo)
 
     # Protocolo único
