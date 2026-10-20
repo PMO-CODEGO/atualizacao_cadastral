@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     app_secret_key: str = "change_me_secret"
 
     upload_dir: str = "/app/storage/uploads"
-    max_upload_size_mb: int = 10
+    max_upload_size_mb: int = 20
     # Soma de todos os anexos de um cadastro. A Brevo recusa e-mails acima de
     # 20MB e o base64 incha os anexos em ~33%, então 14MB deixa folga.
     max_total_upload_size_mb: int = 14

@@ -5,9 +5,6 @@ const RENDER_API_URL = 'https://atualizacao-cadastral-34di.onrender.com';
 const EH_AMBIENTE_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const API_BASE_URL = window.CODEGO_API_BASE_URL || (EH_AMBIENTE_LOCAL ? 'http://localhost:8001' : RENDER_API_URL);
 const MAX_UPLOAD_SIZE_MB = 10;
-// Soma de todos os anexos. Igual a MAX_TOTAL_UPLOAD_SIZE_MB do back-end: o
-// e-mail com os anexos não pode passar de 20MB (o base64 incha ~33%).
-const MAX_TOTAL_ANEXOS_MB = 14;
 
 const form = document.getElementById('form-atualizacao');
 const submitButton = document.getElementById('btn-submit');
@@ -128,42 +125,10 @@ function formatarTamanho(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
 }
 
-function tamanhoTotalAnexos() {
-  return ARQUIVOS.reduce(
-    (soma, id) => soma + arquivosPorCampo[id].reduce((s, file) => s + file.size, 0),
-    0
-  );
-}
-
-function mensagemTotalExcedido(totalBytes) {
-  return `O total dos anexos (${formatarTamanho(totalBytes)}) passou do limite de ${MAX_TOTAL_ANEXOS_MB}MB. Remova algum arquivo ou envie versões menores.`;
-}
-
-// Mostra a soma dos anexos de todos os campos e avisa se passou do limite.
-function atualizarResumoAnexos() {
-  const resumoEl = document.getElementById('anexos_total-resumo');
-  const total = tamanhoTotalAnexos();
-  if (!total) {
-    resumoEl.hidden = true;
-    clearError('anexos_total');
-    return;
-  }
-  const excedeu = total > MAX_TOTAL_ANEXOS_MB * 1024 * 1024;
-  resumoEl.textContent = `Total dos anexos: ${formatarTamanho(total)} de ${MAX_TOTAL_ANEXOS_MB}MB permitidos.`;
-  resumoEl.className = `field__hint ${excedeu ? 'field__hint--warn' : 'field__hint--ok'}`;
-  resumoEl.hidden = false;
-  if (excedeu) {
-    setError('anexos_total', mensagemTotalExcedido(total));
-  } else {
-    clearError('anexos_total');
-  }
-}
-
 function renderizarListaArquivos(inputId) {
   const listaEl = document.getElementById(`${inputId}-selecionado`);
   const arquivos = arquivosPorCampo[inputId];
   listaEl.innerHTML = '';
-  atualizarResumoAnexos();
   if (!arquivos.length) {
     listaEl.hidden = true;
     return;
@@ -271,41 +236,7 @@ function validarArquivo(inputId) {
 const PADRAO_TEXTO_SEGURO = /^[A-Za-zÀ-ÖØ-öø-ÿ0-9\s.,\-/&()'ºª]+$/;
 const TAMANHO_MAX_PALAVRA = 40;
 
-// Limites de caracteres iguais às colunas do banco (e aos do back-end).
-const LIMITES_TEXTO = {
-  nome_empresarial: 255,
-  endereco: 500,
-  ramo_atividade: 255,
-  previsao_geracao_empregos: 255,
-  representante_nome: 255,
-};
-
-// Conta como o back-end: espaços/quebras de linha seguidos valem um só.
-function tamanhoNormalizado(valor) {
-  return valor.replace(/\s+/g, ' ').trim().length;
-}
-
-function mensagemLimite(limite, tamanho) {
-  return `Máximo de ${limite} caracteres (você digitou ${tamanho}). Resuma o texto.`;
-}
-
-// Avisa enquanto digita/cola, sem esperar o envio.
-Object.entries(LIMITES_TEXTO).forEach(([id, limite]) => {
-  document.getElementById(id).addEventListener('input', (e) => {
-    const tamanho = tamanhoNormalizado(e.target.value);
-    if (tamanho > limite) {
-      setError(id, mensagemLimite(limite, tamanho));
-    } else {
-      clearError(id);
-    }
-  });
-});
-
-function validarTextoSeguro(valor, limite) {
-  const tamanho = tamanhoNormalizado(valor);
-  if (limite && tamanho > limite) {
-    return mensagemLimite(limite, tamanho);
-  }
+function validarTextoSeguro(valor) {
   if (!PADRAO_TEXTO_SEGURO.test(valor)) {
     return 'Não use caracteres especiais (@, #, $, %, etc.) neste campo.';
   }
@@ -334,7 +265,7 @@ function validateForm() {
       valid = false;
       continue;
     }
-    const erroTexto = validarTextoSeguro(valor, LIMITES_TEXTO[id]);
+    const erroTexto = validarTextoSeguro(valor);
     if (erroTexto) {
       setError(id, erroTexto);
       valid = false;
@@ -410,12 +341,6 @@ function validateForm() {
       valid = false;
     }
   });
-
-  const totalAnexos = tamanhoTotalAnexos();
-  if (totalAnexos > MAX_TOTAL_ANEXOS_MB * 1024 * 1024) {
-    setError('anexos_total', mensagemTotalExcedido(totalAnexos));
-    valid = false;
-  }
 
   if (typeof grecaptcha !== 'undefined' && !grecaptcha.getResponse()) {
     setError('recaptcha', 'Confirme que você não é um robô.');
