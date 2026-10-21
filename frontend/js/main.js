@@ -5,6 +5,9 @@ const RENDER_API_URL = 'https://atualizacao-cadastral-34di.onrender.com';
 const EH_AMBIENTE_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const API_BASE_URL = window.CODEGO_API_BASE_URL || (EH_AMBIENTE_LOCAL ? 'http://localhost:8001' : RENDER_API_URL);
 const MAX_UPLOAD_SIZE_MB = 10;
+// Sem resposta do servidor em 5 minutos (upload lento + servidor iniciando +
+// processamento), a tela mostra o erro em vez de ficar presa em "Enviando…".
+const TIMEOUT_ENVIO_MS = 5 * 60 * 1000;
 
 const form = document.getElementById('form-atualizacao');
 const submitButton = document.getElementById('btn-submit');
@@ -369,13 +372,97 @@ function setLoading(isLoading) {
   submitButton.textContent = isLoading ? 'Enviando…' : 'Enviar atualização cadastral';
 }
 
-function extrairMensagemErro(payload) {
-  if (!payload) return 'Não foi possível enviar a solicitação. Tente novamente.';
+function extrairMensagemErro(payload, status) {
+  if (!payload) {
+    return status
+      ? `O servidor respondeu com erro (HTTP ${status}). Tente novamente em instantes.`
+      : 'Não foi possível enviar a solicitação. Tente novamente.';
+  }
   if (typeof payload.detail === 'string') return payload.detail;
   if (Array.isArray(payload.detail)) {
     return payload.detail.map((erro) => erro.msg || 'Campo inválido.').join(' ');
   }
   return 'Não foi possível enviar a solicitação. Tente novamente.';
+}
+
+function formatarTempo(segundos) {
+  return `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}`;
+}
+
+// Mostra o andamento do envio: tempo corrido e, depois de 20s, um aviso de que
+// arquivos grandes, conexão lenta ou servidor iniciando podem demorar.
+// Retorna a função que para o contador.
+function iniciarAndamentoEnvio() {
+  const inicio = performance.now();
+  showFeedback(
+    '<p class="feedback__title">Enviando…</p><p class="feedback__espera"></p>',
+    'info'
+  );
+  const textoEl = feedbackEl.querySelector('.feedback__espera');
+
+  const atualizar = () => {
+    const segundos = Math.floor((performance.now() - inicio) / 1000);
+    submitButton.textContent = `Enviando… ${formatarTempo(segundos)}`;
+    textoEl.textContent = segundos < 20
+      ? 'Enviando os dados e documentos. Aguarde e não feche esta página.'
+      : 'Ainda enviando. Arquivos grandes ou uma conexão lenta podem levar alguns minutos, e o servidor pode estar iniciando (na primeira vez leva até 1 minuto). Não feche nem recarregue esta página.';
+  };
+
+  atualizar();
+  const timer = setInterval(atualizar, 1000);
+  return () => clearInterval(timer);
+}
+
+function escapeHtml(texto) {
+  return String(texto).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+// Dados do momento do erro, para a gente descobrir a causa sem depender de log.
+function linhasContexto(inicioEnvio, arquivos) {
+  const totalBytes = arquivos.reduce((soma, file) => soma + file.size, 0);
+  const conexao = navigator.connection ? navigator.connection.effectiveType : 'n/d';
+  return [
+    `Data/hora: ${new Date().toLocaleString('pt-BR')}`,
+    `Servidor: ${API_BASE_URL}`,
+    `Tempo até o erro: ${((performance.now() - inicioEnvio) / 1000).toFixed(1)}s`,
+    `Anexos: ${arquivos.length} arquivo(s), ${formatarTamanho(totalBytes)}`,
+    `Internet do navegador: ${navigator.onLine ? 'conectado' : 'sem conexão'} (tipo: ${conexao})`,
+    `Navegador: ${navigator.userAgent}`,
+  ];
+}
+
+// Bloco "Detalhes técnicos" que acompanha qualquer erro: a pessoa pode copiar
+// e mandar para o suporte. Montado com textContent (nada vira HTML).
+function mostrarDetalhesTecnicos(linhas) {
+  const texto = linhas.join('\n');
+
+  const detalhes = document.createElement('details');
+  detalhes.className = 'feedback__details';
+  detalhes.open = true;
+
+  const resumo = document.createElement('summary');
+  resumo.textContent = 'Detalhes técnicos (envie ao suporte se o erro continuar)';
+
+  const bloco = document.createElement('pre');
+  bloco.textContent = texto;
+
+  const copiar = document.createElement('button');
+  copiar.type = 'button';
+  copiar.className = 'feedback__copy';
+  copiar.textContent = 'Copiar detalhes';
+  copiar.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      copiar.textContent = 'Copiado!';
+    } catch (erro) {
+      copiar.textContent = 'Selecione o texto acima e copie';
+    }
+  });
+
+  detalhes.append(resumo, bloco, copiar);
+  feedbackEl.appendChild(detalhes);
 }
 
 form.addEventListener('submit', async (event) => {
@@ -409,28 +496,48 @@ form.addEventListener('submit', async (event) => {
     arquivosPorCampo[inputId].forEach((file) => formData.append(inputId, file));
   });
 
+  const arquivosEnviados = ARQUIVOS.flatMap((inputId) => arquivosPorCampo[inputId]);
+  const inicioEnvio = performance.now();
+
   setLoading(true);
+  const pararAndamento = iniciarAndamentoEnvio();
+  const controlador = new AbortController();
+  const temporizador = setTimeout(() => controlador.abort(), TIMEOUT_ENVIO_MS);
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/atualizacao-cadastral`, {
       method: 'POST',
       body: formData,
+      signal: controlador.signal,
     });
 
-    const data = await response.json().catch(() => null);
+    // Lê como texto e tenta JSON: respostas de erro de proxy/servidor (500,
+    // 502...) nem sempre são JSON e antes sumiam sem nenhuma pista.
+    const corpo = await response.text();
+    let data = null;
+    try {
+      data = JSON.parse(corpo);
+    } catch (erroJson) {
+      data = null;
+    }
 
     if (!response.ok) {
       showFeedback(
-        `<p class="feedback__title">Não foi possível enviar a solicitação</p><p>${extrairMensagemErro(data)}</p>`,
+        `<p class="feedback__title">Não foi possível enviar a solicitação</p><p>${escapeHtml(extrairMensagemErro(data, response.status))}</p>`,
         'error'
       );
+      mostrarDetalhesTecnicos([
+        `Erro: o servidor respondeu HTTP ${response.status} ${response.statusText}`.trim(),
+        `Resposta do servidor: ${data ? JSON.stringify(data).slice(0, 500) : (corpo.slice(0, 300) || '(vazia)')}`,
+        ...linhasContexto(inicioEnvio, arquivosEnviados),
+      ]);
       return;
     }
 
     const protocolo = data.processo.protocolo;
     const avisoEmail = data.email_enviado
-      ? `<p class="feedback__email-status feedback__email-status--ok">✓ Uma cópia foi enviada para ${data.email_destinatario}.</p>`
-      : `<p class="feedback__email-status feedback__email-status--warn">Os dados foram salvos, mas não foi possível enviar a confirmação por e-mail.${data.email_erro ? ` <code>${data.email_erro}</code>` : ''}</p>`;
+      ? `<p class="feedback__email-status feedback__email-status--ok">✓ Uma cópia foi enviada para ${escapeHtml(data.email_destinatario)}.</p>`
+      : `<p class="feedback__email-status feedback__email-status--warn">Os dados foram salvos, mas não foi possível enviar a confirmação por e-mail.${data.email_erro ? ` <code>${escapeHtml(data.email_erro)}</code>` : ''}</p>`;
 
     const pdfUrl = `${API_BASE_URL}${data.pdf_download_url}`;
 
@@ -450,11 +557,23 @@ form.addEventListener('submit', async (event) => {
       renderizarListaArquivos(inputId);
     });
   } catch (error) {
+    const tempoEsgotado = error && error.name === 'AbortError';
+    const minutos = TIMEOUT_ENVIO_MS / 60000;
     showFeedback(
-      `<p class="feedback__title">Falha de conexão</p><p>Não foi possível falar com o servidor. Verifique se a API está em execução e tente novamente.</p>`,
+      tempoEsgotado
+        ? `<p class="feedback__title">O servidor demorou demais para responder</p><p>Não recebemos resposta em ${minutos} minutos. O cadastro pode ter sido recebido mesmo assim: antes de enviar de novo, entre em contato com a CODEGO e informe os detalhes técnicos abaixo.</p>`
+        : `<p class="feedback__title">Falha de conexão</p><p>O navegador não conseguiu receber a resposta do servidor. Pode ser instabilidade na internet, ou o servidor estar iniciando ou com erro interno. Aguarde um minuto e tente novamente.</p>`,
       'error'
     );
+    mostrarDetalhesTecnicos([
+      tempoEsgotado
+        ? `Erro: tempo esgotado (${minutos} min) sem resposta do servidor`
+        : `Erro: ${error && error.name ? error.name : 'Error'}: ${error && error.message ? error.message : String(error)}`,
+      ...linhasContexto(inicioEnvio, arquivosEnviados),
+    ]);
   } finally {
+    pararAndamento();
+    clearTimeout(temporizador);
     setLoading(false);
     if (typeof grecaptcha !== 'undefined') {
       grecaptcha.reset();

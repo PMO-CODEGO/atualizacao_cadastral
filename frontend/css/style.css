@@ -575,6 +575,18 @@ input:focus-visible {
   color: var(--danger);
 }
 
+.feedback--info {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.feedback__espera {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
 .feedback__title {
   font-weight: 600;
   margin: 0 0 6px;
@@ -637,6 +649,51 @@ input:focus-visible {
   font-size: 11px;
   color: var(--danger);
   word-break: break-word;
+}
+
+/* Detalhes técnicos do erro (copiáveis para mandar ao suporte) */
+
+.feedback__details {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.feedback__details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.feedback__details pre {
+  margin: 8px 0;
+  padding: 10px 12px;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  user-select: all;
+}
+
+.feedback__copy {
+  padding: 6px 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--danger);
+  background: transparent;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.feedback__copy:hover {
+  background: var(--danger);
+  color: #fff;
 }
 
 .btn-primary[disabled] {
